@@ -1,0 +1,323 @@
+// ==========================
+// GENERATOR & DATASOURCE
+// ==========================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================
+// ENUMS
+// ==========================
+enum Role {
+  CLIENT
+  BARBER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  LITE
+  PRIME
+  ELITE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum Theme {
+  MODERN
+  CLASSIC
+  VINTAGE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum InviteStatus {
+  PENDING_INVITE    // Sin invitación enviada aún
+  INVITED           // Link enviado, esperando registro
+  PENDING_APPROVAL  // Se registró, esperando aprobación del dueño
+  APPROVED          // Aprobado, tiene acceso al panel
+  REJECTED          // Rechazado por el dueño
+}
+
+// ==========================
+// MODELS
+// ==========================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(CLIENT)
+
+  barbershop    Barbershop?
+  barberProfile Barber?        @relation("BarberUser") // ✅ NUEVO — si es barbero vinculado
+  reviews       Review[]
+  appointments  Appointment[]
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Barbershop {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  address     String
+  phone       String
+  description String?
+
+  // 🎨 IDENTIDAD VISUAL
+  bio         String?   @db.Text
+  logo        String?
+  colors      String[]
+  theme       Theme     @default(MODERN)
+
+  // 📸 GALERÍA
+  photos      String[]
+
+  // 📊 ANALYTICS
+  viewCount   Int       @default(0)
+
+  // 👉 Dueño
+  ownerId     String    @unique
+  owner       User      @relation(fields: [ownerId], references: [id])
+
+  // 👉 Relaciones
+  services     Service[]
+  subscription Subscription?
+  reviews      Review[]
+  barbers      Barber[]
+  appointments Appointment[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+// 💳 SUSCRIPCIÓN
+model Subscription {
+  id            String             @id @default(cuid())
+  plan          SubscriptionPlan   @default(LITE)
+  status        SubscriptionStatus @default(TRIAL)
+
+  maxBarbers    Int                @default(1)
+  maxPhotos     Int                @default(10)
+
+  startDate     DateTime           @default(now())
+  endDate       DateTime?
+  trialEndsAt   DateTime?
+
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
+  barbershopId  String    @unique
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ✂️ BARBEROS
+model Barber {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  photo        String?
+  bio          String?       @db.Text
+  isActive     Boolean       @default(true)
+
+  // ✅ NUEVOS — acceso al sistema
+  userId        String?       @unique  // Usuario vinculado (si ya aceptó invitación)
+  user          User?         @relation("BarberUser", fields: [userId], references: [id])
+  inviteStatus  InviteStatus  @default(PENDING_INVITE)
+  showEarnings  Boolean       @default(false) // Dueño puede activar/desactivar ver sus ingresos
+
+  barbershopId String
+  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  schedules    BarberSchedule[]
+  breaks       BarberBreak[]
+  invitations  BarberInvitation[] // ✅ NUEVO
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([barbershopId])
+  @@index([userId])
+}
+
+// 📨 INVITACIONES DE BARBERO
+model BarberInvitation {
+  id        String    @id @default(cuid())
+  token     String    @unique  // Token único del link
+  email     String?            // Email al que se envió (opcional)
+  expiresAt DateTime           // Cuándo expira el link
+  usedAt    DateTime?          // Cuándo fue usado
+
+  barberId  String
+  barber    Barber    @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([barberId])
+}
+
+// 🗓️ HORARIO POR BARBERO
+model BarberSchedule {
+  id        String  @id @default(cuid())
+  dayOfWeek Int     // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
+  startTime String  // "08:00"
+  endTime   String  // "18:00"
+  isWorking Boolean @default(true)
+
+  barberId  String
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barberId, dayOfWeek])
+  @@index([barberId])
+}
+
+// ☕ DESCANSOS DEL BARBERO
+model BarberBreak {
+  id        String  @id @default(cuid())
+  label     String  // "Almuerzo", "Pausa activa", etc.
+  dayOfWeek Int     // 0=Dom ... 6=Sáb. -1 = todos los días
+  startTime String  // "12:00"
+  endTime   String  // "13:00"
+
+  barberId  String
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([barberId])
+}
+
+// 👉 SERVICIOS
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  duration     Int
+
+  barbershopId String
+  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([barbershopId])
+}
+
+// 📅 CITAS
+model Appointment {
+  id     String            @id @default(cuid())
+  date   DateTime
+  status AppointmentStatus @default(CONFIRMED)
+  notes  String?
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+  barberId  String
+  barber    Barber  @relation(fields: [barberId], references: [id])
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  clientId   String?
+  client     User?   @relation(fields: [clientId], references: [id])
+  guestName  String?
+  guestPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([barbershopId])
+  @@index([barberId])
+  @@index([date])
+}
+
+// ⭐ RESEÑAS
+model Review {
+  id            String     @id @default(cuid())
+  rating        Int
+  comment       String?    @db.Text
+
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  clientId      String
+  client        User       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([barbershopId])
+  @@index([clientId])
+}
+
+// 👉 NEXTAUTH MODELS
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
