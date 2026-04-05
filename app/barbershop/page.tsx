@@ -1,11 +1,9 @@
 // app/barbershop/page.tsx
-// Dashboard principal de la barbería
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 
 const QRCodeDisplay = dynamic(() => import('./components/QRCodeDisplay'), {
@@ -35,7 +33,9 @@ export default function BarbershopHome() {
   const [error, setError] = useState<string | null>(null);
   const [showLinkCopied, setShowLinkCopied] = useState(false);
 
-  const publicUrl = barbershop ? `${window.location.origin}/b/${barbershop.slug}` : '';
+  const publicUrl = barbershop && typeof window !== 'undefined'
+    ? `${window.location.origin}/b/${barbershop.slug}`
+    : '';
 
   const copyPublicLink = () => {
     navigator.clipboard.writeText(publicUrl);
@@ -44,14 +44,15 @@ export default function BarbershopHome() {
   };
 
   useEffect(() => {
+    // ✅ Sin sesión → signOut en lugar de push('/login') para evitar loop
     if (status === 'unauthenticated') {
-      router.push('/login');
+      signOut({ callbackUrl: '/login' });
       return;
     }
     if (status === 'authenticated') {
       loadBarbershop();
     }
-  }, [status, router]);
+  }, [status]);
 
   const loadBarbershop = async () => {
     try {
@@ -70,10 +71,10 @@ export default function BarbershopHome() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4" />
+          <p className="text-gray-400">Cargando...</p>
         </div>
       </div>
     );
@@ -81,10 +82,10 @@ export default function BarbershopHome() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-red-800 font-semibold mb-2">Error</h2>
-          <p className="text-red-600">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="bg-red-900/40 border border-red-700 rounded-lg p-6 max-w-md">
+          <h2 className="text-red-300 font-semibold mb-2">Error</h2>
+          <p className="text-red-400">{error}</p>
           <button onClick={loadBarbershop} className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
             Reintentar
           </button>
@@ -109,7 +110,7 @@ export default function BarbershopHome() {
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline text-sm text-gray-600">{session?.user?.name}</span>
               <button
-                onClick={() => router.push('/api/auth/signout')}
+                onClick={() => signOut({ callbackUrl: '/login' })}
                 className="text-xs sm:text-sm text-red-600 hover:text-red-700 font-medium"
               >
                 Salir
@@ -129,18 +130,12 @@ export default function BarbershopHome() {
               <p className="text-blue-100 text-sm">Comparte este link con tus clientes</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <a
-                href={publicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition text-center"
-              >
+              <a href={publicUrl} target="_blank" rel="noopener noreferrer"
+                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition text-center">
                 👁️ Ver Mi Página
               </a>
-              <button
-                onClick={copyPublicLink}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-400 transition"
-              >
+              <button onClick={copyPublicLink}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-400 transition">
                 {showLinkCopied ? '✓ Copiado!' : '📋 Copiar Link'}
               </button>
               <QRCodeDisplay url={publicUrl} barbershopName={barbershop.name} />
@@ -163,11 +158,8 @@ export default function BarbershopHome() {
           </div>
           <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-            {/* Servicios */}
-            <button
-              onClick={() => router.push('/barbershop/services')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left"
-            >
+            <button onClick={() => router.push('/barbershop/services')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
               <div className="bg-blue-100 p-3 rounded-lg flex-shrink-0">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -179,11 +171,8 @@ export default function BarbershopHome() {
               </div>
             </button>
 
-            {/* Agenda */}
-            <button
-              onClick={() => router.push('/barbershop/agenda')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left"
-            >
+            <button onClick={() => router.push('/barbershop/agenda')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
               <div className="bg-green-100 p-3 rounded-lg flex-shrink-0">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -195,11 +184,8 @@ export default function BarbershopHome() {
               </div>
             </button>
 
-            {/* ✅ Mi Equipo */}
-            <button
-              onClick={() => router.push('/barbershop/barbers')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left"
-            >
+            <button onClick={() => router.push('/barbershop/barbers')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
               <div className="bg-orange-100 p-3 rounded-lg flex-shrink-0">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -211,11 +197,8 @@ export default function BarbershopHome() {
               </div>
             </button>
 
-            {/* Configuración */}
-            <button
-              onClick={() => router.push('/barbershop/settings')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left"
-            >
+            <button onClick={() => router.push('/barbershop/settings')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
               <div className="bg-purple-100 p-3 rounded-lg flex-shrink-0">
                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -228,11 +211,8 @@ export default function BarbershopHome() {
               </div>
             </button>
 
-            {/* Planes y pagos */}
-            <button
-              onClick={() => router.push('/barbershop/plans')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left"
-            >
+            <button onClick={() => router.push('/barbershop/plans')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
               <div className="bg-yellow-100 p-3 rounded-lg flex-shrink-0">
                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -241,6 +221,19 @@ export default function BarbershopHome() {
               <div>
                 <p className="font-medium text-gray-900">Planes y pagos</p>
                 <p className="text-sm text-gray-500">Gestionar suscripción</p>
+              </div>
+            </button>
+
+            <button onClick={() => router.push('/barbershop/stats')}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition text-left">
+              <div className="bg-indigo-100 p-3 rounded-lg flex-shrink-0">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Estadísticas</p>
+                <p className="text-sm text-gray-500">Ingresos y métricas</p>
               </div>
             </button>
 
