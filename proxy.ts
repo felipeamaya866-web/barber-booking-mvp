@@ -5,28 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // ✅ Excluir rutas públicas y de auth para evitar loops
-  if (
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/b/') ||
-    pathname.startsWith('/invite/') ||
-    pathname === '/'
-  ) {
-    return NextResponse.next();
-  }
-
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Sin sesión → redirigir al login
-  if (!token) {
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // Sin sesión → dejar pasar (las páginas manejan su propio auth)
+  if (!token) return NextResponse.next();
 
   const role = (token as { role?: string }).role;
 
@@ -47,6 +32,5 @@ export const config = {
   matcher: [
     '/barbershop/:path*',
     '/barber/:path*',
-    '/login',
   ],
 };
