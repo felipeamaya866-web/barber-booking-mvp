@@ -1,23 +1,20 @@
 // app/barbershop/plans/resultado/page.tsx
-// Wompi redirige aquí con: ?id=TRANSACTION_ID&env=test
-// Consultamos el estado real de la transacción a la API de Wompi
-
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type Estado = 'cargando' | 'aprobado' | 'rechazado' | 'pendiente';
 
-export default function ResultadoPagoPage() {
+function ResultadoContent() {
   const searchParams = useSearchParams();
   const router       = useRouter();
   const [estado, setEstado] = useState<Estado>('cargando');
 
   useEffect(() => {
     const transactionId = searchParams.get('id');
-    const env           = searchParams.get('env'); // 'test' o 'prod'
+    const env           = searchParams.get('env');
 
     if (!transactionId) {
       router.push('/barbershop/plans');
@@ -29,10 +26,8 @@ export default function ResultadoPagoPage() {
 
   async function verificarTransaccion(transactionId: string, env: string | null) {
     try {
-      // Consultar el estado de la transacción a nuestro backend
       const res  = await fetch(`/api/payments/verify?id=${transactionId}&env=${env || 'test'}`);
       const data = await res.json();
-
       const status = data.status as string;
 
       if (status === 'APPROVED') {
@@ -41,7 +36,6 @@ export default function ResultadoPagoPage() {
       } else if (status === 'DECLINED' || status === 'ERROR' || status === 'VOIDED') {
         setEstado('rechazado');
       } else {
-        // PENDING o cualquier otro estado
         setEstado('pendiente');
       }
     } catch {
@@ -49,9 +43,6 @@ export default function ResultadoPagoPage() {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
   if (estado === 'cargando') {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -71,9 +62,7 @@ export default function ResultadoPagoPage() {
           <>
             <div className="text-6xl mb-4">🎉</div>
             <h1 className="text-2xl font-bold text-white mb-2">¡Pago exitoso!</h1>
-            <p className="text-gray-400 mb-6">
-              Tu plan ha sido activado correctamente. Redirigiendo al dashboard...
-            </p>
+            <p className="text-gray-400 mb-6">Tu plan ha sido activado. Redirigiendo...</p>
             <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <Link href="/barbershop" className="text-yellow-400 text-sm hover:underline">
               Ir al dashboard ahora →
@@ -85,14 +74,10 @@ export default function ResultadoPagoPage() {
           <>
             <div className="text-6xl mb-4">😕</div>
             <h1 className="text-2xl font-bold text-white mb-2">Pago no procesado</h1>
-            <p className="text-gray-400 mb-6">
-              El pago fue rechazado o hubo un error. Puedes intentarlo de nuevo.
-            </p>
+            <p className="text-gray-400 mb-6">El pago fue rechazado. Puedes intentarlo de nuevo.</p>
             <div className="flex flex-col gap-3">
-              <Link
-                href="/barbershop/plans"
-                className="w-full bg-yellow-400 text-gray-900 py-3 rounded-xl font-bold text-sm hover:bg-yellow-300 transition text-center"
-              >
+              <Link href="/barbershop/plans"
+                className="w-full bg-yellow-400 text-gray-900 py-3 rounded-xl font-bold text-sm hover:bg-yellow-300 transition text-center">
                 Intentar de nuevo
               </Link>
               <Link href="/barbershop" className="text-gray-400 text-sm hover:text-white transition">
@@ -106,13 +91,9 @@ export default function ResultadoPagoPage() {
           <>
             <div className="text-6xl mb-4">⏳</div>
             <h1 className="text-2xl font-bold text-white mb-2">Pago en proceso</h1>
-            <p className="text-gray-400 mb-6">
-              Tu pago está siendo verificado. En unos minutos se activará tu plan.
-            </p>
-            <Link
-              href="/barbershop"
-              className="w-full bg-gray-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-gray-600 transition inline-block"
-            >
+            <p className="text-gray-400 mb-6">Tu pago está siendo verificado. En unos minutos se activará tu plan.</p>
+            <Link href="/barbershop"
+              className="w-full bg-gray-700 text-white py-3 rounded-xl font-bold text-sm hover:bg-gray-600 transition inline-block">
               Volver al dashboard
             </Link>
           </>
@@ -120,5 +101,18 @@ export default function ResultadoPagoPage() {
 
       </div>
     </div>
+  );
+}
+
+// ✅ Suspense boundary requerido por Next.js para useSearchParams
+export default function ResultadoPagoPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ResultadoContent />
+    </Suspense>
   );
 }
