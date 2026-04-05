@@ -1,24 +1,37 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, Suspense } from 'react';
 
 function LoginContent() {
-  const searchParams = useSearchParams();
-  const callbackUrl  = searchParams.get('callbackUrl') || '/barbershop';
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Si ya tiene sesión, redirigir según rol
+    if (status === 'authenticated') {
+      const role = (session?.user as { role?: string })?.role;
+      if (role === 'BARBER') router.replace('/barber/dashboard');
+      else router.replace('/barbershop');
+    }
+  }, [status, session, router]);
+
+  if (status === 'loading') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #C9A84C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    );
+  }
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap');
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-          background: #080808;
-          font-family: 'DM Sans', sans-serif;
-        }
+        body { background: #080808; font-family: 'DM Sans', sans-serif; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .login-bg {
           min-height: 100vh;
@@ -30,7 +43,6 @@ function LoginContent() {
           overflow: hidden;
           background: #080808;
         }
-
         .login-bg::before {
           content: '';
           position: absolute;
@@ -39,7 +51,6 @@ function LoginContent() {
             radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
             radial-gradient(ellipse 40% 40% at 80% 90%, rgba(201,168,76,0.04) 0%, transparent 50%);
         }
-
         .login-bg::after {
           content: '';
           position: absolute;
@@ -50,7 +61,6 @@ function LoginContent() {
           background-size: 60px 60px;
           mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
         }
-
         .login-card {
           position: relative;
           z-index: 1;
@@ -63,7 +73,6 @@ function LoginContent() {
           text-align: center;
           box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05);
         }
-
         .logo-wrap {
           display: flex;
           align-items: center;
@@ -71,7 +80,6 @@ function LoginContent() {
           gap: 12px;
           margin-bottom: 40px;
         }
-
         .logo-icon {
           width: 48px;
           height: 48px;
@@ -83,41 +91,11 @@ function LoginContent() {
           font-size: 22px;
           box-shadow: 0 0 24px rgba(201,168,76,0.3);
         }
-
-        .logo-text {
-          font-family: 'Playfair Display', serif;
-          font-size: 22px;
-          font-weight: 700;
-          color: #F5F0E8;
-        }
-
+        .logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #F5F0E8; }
         .logo-text span { color: #C9A84C; }
-
-        .divider {
-          width: 40px;
-          height: 1px;
-          background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent);
-          margin: 0 auto 32px;
-        }
-
-        .login-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 28px;
-          font-weight: 700;
-          color: #F5F0E8;
-          letter-spacing: -0.5px;
-          margin-bottom: 10px;
-          line-height: 1.2;
-        }
-
-        .login-sub {
-          font-size: 14px;
-          color: rgba(245,240,232,0.4);
-          font-weight: 300;
-          line-height: 1.6;
-          margin-bottom: 40px;
-        }
-
+        .divider { width: 40px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent); margin: 0 auto 32px; }
+        .login-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.5px; margin-bottom: 10px; line-height: 1.2; }
+        .login-sub { font-size: 14px; color: rgba(245,240,232,0.4); font-weight: 300; line-height: 1.6; margin-bottom: 40px; }
         .google-btn {
           width: 100%;
           display: flex;
@@ -136,69 +114,29 @@ function LoginContent() {
           transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
           box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-
-        .google-btn:hover {
-          background: #ffffff;
-          transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-        }
-
-        .google-btn:active {
-          transform: translateY(0);
-        }
-
-        .google-icon {
-          width: 20px;
-          height: 20px;
-          flex-shrink: 0;
-        }
-
-        .footer-note {
-          margin-top: 28px;
-          font-size: 12px;
-          color: rgba(245,240,232,0.2);
-          line-height: 1.6;
-        }
-
-        .footer-note a {
-          color: rgba(201,168,76,0.5);
-          text-decoration: none;
-        }
-
-        .back-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 13px;
-          color: rgba(245,240,232,0.3);
-          text-decoration: none;
-          margin-top: 24px;
-          transition: color 0.2s;
-        }
-
+        .google-btn:hover { background: #ffffff; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+        .google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .footer-note { margin-top: 28px; font-size: 12px; color: rgba(245,240,232,0.2); line-height: 1.6; }
+        .footer-note a { color: rgba(201,168,76,0.5); text-decoration: none; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(245,240,232,0.3); text-decoration: none; margin-top: 24px; transition: color 0.2s; }
         .back-link:hover { color: rgba(201,168,76,0.7); }
       `}</style>
 
       <div className="login-bg">
         <div className="login-card">
-
-          {/* Logo */}
           <div className="logo-wrap">
             <div className="logo-icon">✂️</div>
             <span className="logo-text">Barber<span>Booking</span></span>
           </div>
-
           <div className="divider" />
-
-          {/* Texto */}
           <h1 className="login-title">Bienvenido de vuelta</h1>
           <p className="login-sub">
             Inicia sesión para gestionar tu barbería<br />o acceder a tu panel de trabajo
           </p>
 
-          {/* Botón Google */}
+          {/* ✅ callbackUrl siempre apunta a / para evitar loops */}
           <button
-            onClick={() => signIn('google', { callbackUrl })}
+            onClick={() => signIn('google', { callbackUrl: '/' })}
             className="google-btn"
           >
             <svg className="google-icon" viewBox="0 0 24 24">
@@ -213,10 +151,8 @@ function LoginContent() {
           <p className="footer-note">
             Al continuar aceptas nuestros{' '}
             <a href="#">Términos de servicio</a>{' '}
-            y{' '}
-            <a href="#">Política de privacidad</a>
+            y <a href="#">Política de privacidad</a>
           </p>
-
           <a href="/" className="back-link">← Volver al inicio</a>
         </div>
       </div>
