@@ -1,20 +1,30 @@
-// proxy.ts — Next.js 16 (antes middleware.ts)
+// proxy.ts — Next.js 16
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Obtener token JWT
+  // ✅ Excluir rutas públicas y de auth para evitar loops
+  if (
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/b/') ||
+    pathname.startsWith('/invite/') ||
+    pathname === '/'
+  ) {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Si no hay sesión → redirigir al login
+  // Sin sesión → redirigir al login
   if (!token) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
+    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -37,5 +47,6 @@ export const config = {
   matcher: [
     '/barbershop/:path*',
     '/barber/:path*',
+    '/login',
   ],
 };
