@@ -1,6 +1,4 @@
 // app/page.tsx
-// Página de inicio — redirige automáticamente si ya hay sesión
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -10,10 +8,10 @@ import { useSession } from 'next-auth/react';
 export default function HomePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [slug, setSlug] = useState('');
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Redirigir automáticamente según el rol
+  // ✅ Redirigir según rol si ya tiene sesión
   useEffect(() => {
     if (status === 'authenticated') {
       const role = (session?.user as { role?: string })?.role;
@@ -22,21 +20,29 @@ export default function HomePage() {
     }
   }, [status, session, router]);
 
+  // ✅ Observer con delay para que el DOM esté listo
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
-        });
-      },
-      { threshold: 0.1 }
-    );
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+    if (status === 'authenticated' || status === 'loading') return;
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+          });
+        },
+        { threshold: 0.1 }
+      );
+      document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [status]);
 
-  // Si está cargando la sesión, mostrar spinner
-  if (status === 'loading') {
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (slug.trim()) router.push(`/b/${slug.trim().toLowerCase()}`);
+  }
+
+  if (status === 'loading' || status === 'authenticated') {
     return (
       <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 32, height: 32, border: '3px solid #C9A84C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -44,9 +50,6 @@ export default function HomePage() {
       </div>
     );
   }
-
-  // Si ya tiene sesión, no mostrar nada (está redirigiendo)
-  if (status === 'authenticated') return null;
 
   return (
     <>
@@ -95,9 +98,9 @@ export default function HomePage() {
         .hero-scroll { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.4; animation: fadeUp 1s 0.8s ease both; }
         .scroll-line { width: 1px; height: 48px; background: linear-gradient(to bottom, transparent, var(--gold)); animation: scrollPulse 2s infinite; }
 
-        .btn-primary { background: linear-gradient(135deg, var(--gold-lt), var(--gold-dk)); color: var(--black); padding: 16px 36px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 8px 32px rgba(201,168,76,0.25); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold-lt), var(--gold-dk)); color: var(--black); padding: 16px 36px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 8px 32px rgba(201,168,76,0.25); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-block; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,168,76,0.35); }
-        .btn-secondary { background: transparent; color: var(--white); padding: 16px 36px; border-radius: 10px; font-weight: 400; font-size: 15px; text-decoration: none; border: 1px solid rgba(245,240,232,0.15); transition: border-color 0.2s, background 0.2s; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .btn-secondary { background: transparent; color: var(--white); padding: 16px 36px; border-radius: 10px; font-weight: 400; font-size: 15px; text-decoration: none; border: 1px solid rgba(245,240,232,0.15); transition: border-color 0.2s, background 0.2s; cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-block; }
         .btn-secondary:hover { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.05); }
 
         .stats { padding: 60px 48px; border-top: 1px solid rgba(201,168,76,0.1); border-bottom: 1px solid rgba(201,168,76,0.1); display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -112,7 +115,7 @@ export default function HomePage() {
         .section-sub { font-size: 16px; color: rgba(245,240,232,0.5); font-weight: 300; line-height: 1.7; max-width: 480px; }
 
         .paths { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 64px; }
-        .path-card { background: var(--gray-1); border: 1px solid var(--gray-3); border-radius: 20px; padding: 48px; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s; cursor: pointer; text-decoration: none; display: block; }
+        .path-card { background: var(--gray-1); border: 1px solid var(--gray-3); border-radius: 20px; padding: 48px; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s; text-decoration: none; display: block; }
         .path-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left, rgba(201,168,76,0.08), transparent 60%); opacity: 0; transition: opacity 0.3s; }
         .path-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-4px); }
         .path-card:hover::before { opacity: 1; }
@@ -131,7 +134,7 @@ export default function HomePage() {
         .feature-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: var(--white); font-family: 'Playfair Display', serif; }
         .feature-desc { font-size: 14px; color: rgba(245,240,232,0.45); line-height: 1.6; }
 
-        .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 64px; position: relative; }
+        .steps { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 64px; position: relative; }
         .steps::before { content: ''; position: absolute; top: 28px; left: 12.5%; right: 12.5%; height: 1px; background: linear-gradient(to right, transparent, var(--gold-dk), var(--gold), var(--gold-dk), transparent); }
         .step { text-align: center; padding: 0 24px; }
         .step-num { width: 56px; height: 56px; background: var(--black); border: 1px solid rgba(201,168,76,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gold); margin: 0 auto 24px; position: relative; z-index: 1; }
@@ -196,9 +199,7 @@ export default function HomePage() {
             <span className="gold">barberías</span>{' '}
             <span className="outline">modernas</span>
           </h1>
-          <p className="hero-sub">
-            Gestiona tu barbería, recibe reservas 24/7 y haz crecer tu negocio con la plataforma más completa del mercado.
-          </p>
+          <p className="hero-sub">Gestiona tu barbería, recibe reservas 24/7 y haz crecer tu negocio con la plataforma más completa del mercado.</p>
           <div className="hero-actions">
             <a href="/login" className="btn-primary">Registra tu barbería →</a>
             <a href="#para-ti" className="btn-secondary">Reservar una cita</a>
@@ -252,7 +253,14 @@ export default function HomePage() {
               <li>Confirmación inmediata</li>
               <li>Sin filas ni esperas</li>
             </ul>
-            <SearchInput />
+            <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+              <input type="text" value={slug} onChange={e => setSlug(e.target.value)} placeholder="Ej: piplex, barberking..."
+                style={{ flex: 1, minWidth: 160, background: 'var(--gray-2)', border: '1px solid var(--gray-3)', borderRadius: 10, padding: '12px 16px', color: 'var(--white)', fontSize: 14, outline: 'none', fontFamily: 'DM Sans, sans-serif' }}
+                onFocus={e => { e.target.style.borderColor = 'rgba(201,168,76,0.5)'; }}
+                onBlur={e  => { e.target.style.borderColor = 'var(--gray-3)'; }}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: '12px 20px', fontSize: 14 }}>Buscar →</button>
+            </form>
           </div>
         </div>
       </section>
@@ -263,12 +271,12 @@ export default function HomePage() {
         <h2 className="section-title reveal">Todo lo que tu barbería<br />necesita para crecer</h2>
         <div className="features-grid reveal">
           {[
-            { icon: '📅', title: 'Agenda inteligente',   desc: 'Vista semanal con todas las citas, filtros por barbero y gestión de estados en tiempo real.' },
-            { icon: '✂️', title: 'Gestión de equipo',    desc: 'Agrega barberos, configura sus horarios, descansos y controla su acceso al sistema.' },
-            { icon: '🌐', title: 'Página pública',        desc: 'Cada barbería tiene su propia landing page personalizable con colores, fotos y servicios.' },
-            { icon: '📊', title: 'Estadísticas',          desc: 'Ingresos, citas por mes, servicios más vendidos y tasa de cancelaciones en un solo lugar.' },
-            { icon: '🔒', title: 'Roles y permisos',      desc: 'El dueño controla qué puede ver cada barbero. Privacidad total de los datos del negocio.' },
-            { icon: '📱', title: 'Reservas 24/7',         desc: 'Los clientes reservan desde cualquier dispositivo, sin llamadas ni mensajes de WhatsApp.' },
+            { icon: '📅', title: 'Agenda inteligente',  desc: 'Vista semanal con todas las citas, filtros por barbero y gestión de estados en tiempo real.' },
+            { icon: '✂️', title: 'Gestión de equipo',   desc: 'Agrega barberos, configura sus horarios, descansos y controla su acceso al sistema.' },
+            { icon: '🌐', title: 'Página pública',       desc: 'Cada barbería tiene su propia landing page personalizable con colores, fotos y servicios.' },
+            { icon: '📊', title: 'Estadísticas',         desc: 'Ingresos, citas por mes, servicios más vendidos y tasa de cancelaciones en un solo lugar.' },
+            { icon: '🔒', title: 'Roles y permisos',     desc: 'El dueño controla qué puede ver cada barbero. Privacidad total de los datos del negocio.' },
+            { icon: '📱', title: 'Reservas 24/7',        desc: 'Los clientes reservan desde cualquier dispositivo, sin llamadas ni mensajes de WhatsApp.' },
           ].map((f, i) => (
             <div key={f.title} className={`feature reveal reveal-delay-${(i % 3) + 1}`}>
               <span className="feature-icon">{f.icon}</span>
@@ -307,7 +315,7 @@ export default function HomePage() {
         <div className="cta-box reveal">
           <h2 className="cta-title">Tu barbería merece<br /><span style={{ color: 'var(--gold)' }}>más que una agenda</span></h2>
           <p className="cta-sub">Únete a cientos de barberías que ya gestionan su negocio con BarberBooking.</p>
-          <a href="/login" className="btn-primary" style={{ display: 'inline-block' }}>Crear mi barbería gratis →</a>
+          <a href="/login" className="btn-primary">Crear mi barbería gratis →</a>
         </div>
       </div>
 
@@ -327,37 +335,5 @@ export default function HomePage() {
         </ul>
       </footer>
     </>
-  );
-}
-
-function SearchInput() {
-  const router = useRouter();
-  const [slug, setSlug] = useState('');
-
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (slug.trim()) router.push(`/b/${slug.trim().toLowerCase()}`);
-  }
-
-  return (
-    <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      <input
-        type="text"
-        value={slug}
-        onChange={e => setSlug(e.target.value)}
-        placeholder="Ej: piplex, barberking..."
-        style={{
-          flex: 1, minWidth: 160,
-          background: 'var(--gray-2)', border: '1px solid var(--gray-3)',
-          borderRadius: 10, padding: '12px 16px', color: 'var(--white)',
-          fontSize: 14, outline: 'none', fontFamily: 'DM Sans, sans-serif',
-        }}
-        onFocus={e  => { e.target.style.borderColor = 'rgba(201,168,76,0.5)'; }}
-        onBlur={e   => { e.target.style.borderColor = 'var(--gray-3)'; }}
-      />
-      <button type="submit" className="btn-primary" style={{ padding: '12px 20px', fontSize: 14 }}>
-        Buscar →
-      </button>
-    </form>
   );
 }

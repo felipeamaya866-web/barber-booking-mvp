@@ -1,6 +1,4 @@
 // app/barbershop/create/Form.tsx
-// Formulario para crear barbería
-
 'use client';
 
 import { useState } from 'react';
@@ -10,22 +8,10 @@ export default function Form() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: '', address: '', phone: '', description: '' });
 
-  const [formData, setFormData] = useState({
-    name: '',
-    address: '',
-    phone: '',
-    description: '',
-  });
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Limpiar error al escribir
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError(null);
   };
 
@@ -33,21 +19,14 @@ export default function Form() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
-      const res = await fetch('/api/barbershop/create', {
-        method: 'POST',
+      const res  = await fetch('/api/barbershop/create', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body:    JSON.stringify(formData),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al crear barbería');
-      }
-
-      // Redirigir al wizard de setup
+      if (!res.ok) throw new Error(data.error || 'Error al crear barbería');
       router.push('/barbershop/setup');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -56,93 +35,46 @@ export default function Form() {
     }
   };
 
+  const inputClass = "w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition";
+  const labelClass = "block text-sm font-medium text-gray-300 mb-1.5";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="bg-red-900/40 border border-red-700 rounded-lg p-4">
+          <p className="text-sm text-red-300">{error}</p>
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-          Nombre de la Barbería *
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Ej: Barbería El Estilo"
-        />
+        <label htmlFor="name" className={labelClass}>Nombre de la Barbería *</label>
+        <input type="text" id="name" name="name" value={formData.name} onChange={handleChange}
+          required className={inputClass} placeholder="Ej: Barbería El Estilo" />
       </div>
 
       <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-          Dirección *
-        </label>
-        <input
-          type="text"
-          id="address"
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Calle 123 #45-67, Bogotá"
-        />
+        <label htmlFor="address" className={labelClass}>Dirección *</label>
+        <input type="text" id="address" name="address" value={formData.address} onChange={handleChange}
+          required className={inputClass} placeholder="Calle 123 #45-67, Bogotá" />
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-          Teléfono *
-        </label>
-        <input
-          type="tel"
-          id="phone"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="+57 300 123 4567"
-        />
+        <label htmlFor="phone" className={labelClass}>Teléfono *</label>
+        <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange}
+          required className={inputClass} placeholder="+57 300 123 4567" />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-          Descripción (Opcional)
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          placeholder="Cuéntanos sobre tu barbería..."
-        />
+        <label htmlFor="description" className={labelClass}>Descripción (Opcional)</label>
+        <textarea id="description" name="description" value={formData.description} onChange={handleChange}
+          rows={4} className={inputClass + " resize-none"} placeholder="Cuéntanos sobre tu barbería..." />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
+      <button type="submit" disabled={loading}
+        className="w-full bg-yellow-400 text-gray-900 py-3 px-4 rounded-lg font-bold hover:bg-yellow-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
         {loading ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Creando...
-          </span>
-        ) : (
-          'Crear Barbería'
-        )}
+          <><span className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />Creando...</>
+        ) : 'Crear Barbería'}
       </button>
     </form>
   );
