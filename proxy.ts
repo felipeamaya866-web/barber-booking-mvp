@@ -1,8 +1,8 @@
-// middleware.ts
+// proxy.ts — Next.js 16 (antes middleware.ts)
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // Obtener token JWT
@@ -20,14 +20,12 @@ export async function middleware(req: NextRequest) {
 
   const role = (token as { role?: string }).role;
 
-  // ── Rutas del dueño (/barbershop/*)
-  // Los barberos no pueden entrar al panel del dueño
+  // Barberos no pueden entrar al panel del dueño
   if (pathname.startsWith('/barbershop') && role === 'BARBER') {
     return NextResponse.redirect(new URL('/barber/dashboard', req.url));
   }
 
-  // ── Rutas del barbero (/barber/*)
-  // Solo BARBER puede entrar
+  // Solo BARBER puede entrar al panel de barbero
   if (pathname.startsWith('/barber') && role !== 'BARBER' && role !== 'ADMIN') {
     return NextResponse.redirect(new URL('/barbershop', req.url));
   }
