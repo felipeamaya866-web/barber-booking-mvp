@@ -1,13 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-    ],
-  },
-};
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-module.exports = nextConfig;
+export function middleware(req: NextRequest) {
+  return NextResponse.next();
+}
