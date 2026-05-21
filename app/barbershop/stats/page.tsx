@@ -192,7 +192,7 @@ export default function StatsPage() {
                       contentStyle={{ background: '#1F2937', border: '1px solid #374151', borderRadius: 8 }}
                       labelStyle={{ color: '#F9FAFB', fontSize: 12 }}
                       itemStyle={{ color: '#FACC15' }}
-                      formatter={(v: number) => [`${v} cita${v !== 1 ? 's' : ''}`, '']}
+                      formatter={(v: number) => [v + ' cita' + (v !== 1 ? 's' : ''), '']}
                     />
                     <Bar dataKey="citas" radius={[4, 4, 0, 0]}>
                       {data.graficaDias.map((entry, i) => (
