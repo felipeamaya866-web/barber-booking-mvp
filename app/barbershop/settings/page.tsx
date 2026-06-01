@@ -40,25 +40,37 @@ const PRESET_COLORS = [
 ];
 
 // ─────────────────────────────────────────────
+// HELPER: archivo a base64
+// ─────────────────────────────────────────────
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Error al leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─────────────────────────────────────────────
 // COMPONENT PRINCIPAL
 // ─────────────────────────────────────────────
 export default function SettingsPage() {
   const router = useRouter();
-  const fileInputRef    = useRef<HTMLInputElement>(null); // galería
-  const logoInputRef    = useRef<HTMLInputElement>(null); // logo
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab]         = useState<Tab>('info');
-  const [loading, setLoading]             = useState(true);
-  const [saving, setSaving]               = useState(false);
+  const [activeTab, setActiveTab]           = useState<Tab>('info');
+  const [loading, setLoading]               = useState(true);
+  const [saving, setSaving]                 = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [successMsg, setSuccessMsg]       = useState('');
-  const [errorMsg, setErrorMsg]           = useState('');
+  const [uploadingLogo, setUploadingLogo]   = useState(false);
+  const [successMsg, setSuccessMsg]         = useState('');
+  const [errorMsg, setErrorMsg]             = useState('');
 
   const [settings, setSettings] = useState<BarbershopSettings>({
     id: '', name: '', slug: '', description: '', bio: '',
     address: '', phone: '',
-    primaryColor: DEFAULT_COLORS.primaryColor,
+    primaryColor:   DEFAULT_COLORS.primaryColor,
     secondaryColor: DEFAULT_COLORS.secondaryColor,
     photos: [], logoUrl: '', plan: 'LITE',
   });
@@ -98,9 +110,9 @@ export default function SettingsPage() {
       setSuccessMsg('');
       setErrorMsg('');
       const res = await fetch('/api/barbershop/settings', {
-        method: 'PUT',
+        method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fieldsToSave),
+        body:    JSON.stringify(fieldsToSave),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || 'Error al guardar'); return; }
@@ -114,7 +126,7 @@ export default function SettingsPage() {
     }
   }
 
-  // ── Subir logo ─────────────────────────────
+  // ✅ Subir logo con base64
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -124,14 +136,9 @@ export default function SettingsPage() {
     try {
       setUploadingLogo(true);
       setErrorMsg('');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'logo');
-      const res = await fetch('/api/barbershop/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al subir logo');
-      setSettings(prev => ({ ...prev, logoUrl: data.url }));
-      await handleSave({ logoUrl: data.url });
+      const base64 = await fileToBase64(file);
+      setSettings(prev => ({ ...prev, logoUrl: base64 }));
+      await handleSave({ logoUrl: base64 });
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Error al subir el logo');
     } finally {
@@ -140,24 +147,19 @@ export default function SettingsPage() {
     }
   }
 
-  // ── Subir fotos galería ────────────────────
+  // ✅ Subir fotos galería con base64
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { setErrorMsg('Solo se permiten imágenes'); return; }
     if (file.size > 5 * 1024 * 1024)    { setErrorMsg('La imagen no puede superar 5MB'); return; }
-    if (settings.photos.length >= 6)     { setErrorMsg('Máximo 6 fotos permitidas'); return; }
+    if (settings.photos.length >= 40)   { setErrorMsg('Máximo de fotos alcanzado'); return; }
 
     try {
       setUploadingPhoto(true);
       setErrorMsg('');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'gallery');
-      const res = await fetch('/api/barbershop/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al subir foto');
-      const updatedPhotos = [...settings.photos, data.url];
+      const base64 = await fileToBase64(file);
+      const updatedPhotos = [...settings.photos, base64];
       setSettings(prev => ({ ...prev, photos: updatedPhotos }));
       await handleSave({ photos: updatedPhotos });
     } catch (err: unknown) {
@@ -193,9 +195,6 @@ export default function SettingsPage() {
     { id: 'colors',  label: 'Colores',     icon: '🎨' },
   ];
 
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-950 text-white">
 
@@ -244,7 +243,6 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* ── TAB INFO ── */}
         {activeTab === 'info' && (
           <InfoTab
             settings={settings}
@@ -295,7 +293,6 @@ export default function SettingsPage() {
 // SUB-COMPONENTES
 // ═════════════════════════════════════════════
 
-// ── INFO TAB (con logo) ───────────────────────
 function InfoTab({
   settings, setSettings, logoInputRef, uploadingLogo, onLogoUpload, onSave, saving,
 }: {
@@ -309,18 +306,14 @@ function InfoTab({
 }) {
   return (
     <div className="space-y-5">
-
-      {/* ── LOGO ── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-3">Logo de la barbería</label>
         <div className="flex items-center gap-4">
-          {/* Preview del logo */}
           <div
             className="w-20 h-20 rounded-full border-2 border-gray-700 overflow-hidden flex items-center justify-center bg-gray-800 flex-shrink-0 cursor-pointer hover:border-yellow-400 transition-colors"
             onClick={() => logoInputRef.current?.click()}
           >
             {settings.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
             ) : (
               <div className="text-center">
@@ -329,19 +322,16 @@ function InfoTab({
               </div>
             )}
           </div>
-
-          {/* Botones */}
           <div className="flex flex-col gap-2">
             <button
               onClick={() => logoInputRef.current?.click()}
               disabled={uploadingLogo}
               className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {uploadingLogo ? (
-                <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Subiendo...</>
-              ) : (
-                <>📤 {settings.logoUrl ? 'Cambiar logo' : 'Subir logo'}</>
-              )}
+              {uploadingLogo
+                ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Subiendo...</>
+                : <>📤 {settings.logoUrl ? 'Cambiar logo' : 'Subir logo'}</>
+              }
             </button>
             {settings.logoUrl && (
               <button
@@ -354,23 +344,15 @@ function InfoTab({
             <p className="text-xs text-gray-500">JPG, PNG · máx. 2MB</p>
           </div>
         </div>
-        <input
-          ref={logoInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onLogoUpload}
-        />
+        <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={onLogoUpload} />
       </div>
 
       <div className="border-t border-gray-800" />
 
-      {/* ── Nombre ── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre de la barbería</label>
         <input
-          type="text"
-          value={settings.name}
+          type="text" value={settings.name}
           onChange={e => setSettings(prev => ({ ...prev, name: e.target.value }))}
           placeholder="Ej: Barbería El Clasico"
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
@@ -380,8 +362,7 @@ function InfoTab({
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">Dirección</label>
         <input
-          type="text"
-          value={settings.address}
+          type="text" value={settings.address}
           onChange={e => setSettings(prev => ({ ...prev, address: e.target.value }))}
           placeholder="Ej: Calle 10 # 5-20, Bogotá"
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
@@ -391,8 +372,7 @@ function InfoTab({
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">Teléfono / WhatsApp</label>
         <input
-          type="tel"
-          value={settings.phone}
+          type="tel" value={settings.phone}
           onChange={e => setSettings(prev => ({ ...prev, phone: e.target.value }))}
           placeholder="Ej: +57 300 000 0000"
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
@@ -413,7 +393,6 @@ function InfoTab({
   );
 }
 
-// ── BIO TAB ───────────────────────────────────
 function BioTab({ settings, setSettings, onSave, saving }: {
   settings: BarbershopSettings;
   setSettings: React.Dispatch<React.SetStateAction<BarbershopSettings>>;
@@ -427,10 +406,9 @@ function BioTab({ settings, setSettings, onSave, saving }: {
     <div className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo del hero</label>
-        <p className="text-xs text-gray-500 mb-2">Aparece debajo del nombre en la parte superior. Ej: <span className="italic">"la mejor"</span></p>
+        <p className="text-xs text-gray-500 mb-2">Aparece debajo del nombre en la parte superior.</p>
         <input
-          type="text"
-          value={settings.description}
+          type="text" value={settings.description}
           onChange={e => setSettings(prev => ({ ...prev, description: e.target.value.slice(0, maxDesc) }))}
           placeholder="Ej: La barbería más elegante de la ciudad"
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
@@ -444,7 +422,7 @@ function BioTab({ settings, setSettings, onSave, saving }: {
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1">Sobre Nosotros</label>
-        <p className="text-xs text-gray-500 mb-2">Sección completa debajo del hero. Si está vacío, no aparece en la landing.</p>
+        <p className="text-xs text-gray-500 mb-2">Sección completa debajo del hero. Si está vacío, no aparece.</p>
         <textarea
           value={settings.bio}
           onChange={e => setSettings(prev => ({ ...prev, bio: e.target.value.slice(0, maxBio) }))}
@@ -483,7 +461,6 @@ function BioTab({ settings, setSettings, onSave, saving }: {
   );
 }
 
-// ── GALLERY TAB ───────────────────────────────
 function GalleryTab({ settings, fileInputRef, uploadingPhoto, onUpload, onDelete }: {
   settings: BarbershopSettings;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -491,7 +468,7 @@ function GalleryTab({ settings, fileInputRef, uploadingPhoto, onUpload, onDelete
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDelete: (index: number) => void;
 }) {
-  const maxPhotos = 6;
+  const maxPhotos = 40;
   const canUpload = settings.photos.length < maxPhotos;
 
   return (
@@ -499,7 +476,7 @@ function GalleryTab({ settings, fileInputRef, uploadingPhoto, onUpload, onDelete
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-300">Fotos de la galería</p>
-          <p className="text-xs text-gray-500 mt-0.5">{settings.photos.length} de {maxPhotos} · Máx. 5MB</p>
+          <p className="text-xs text-gray-500 mt-0.5">{settings.photos.length} de {maxPhotos} · Máx. 5MB por foto</p>
         </div>
         {canUpload && (
           <button
@@ -530,10 +507,12 @@ function GalleryTab({ settings, fileInputRef, uploadingPhoto, onUpload, onDelete
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {settings.photos.map((url, index) => (
             <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-gray-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button onClick={() => onDelete(index)} className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">
+                <button
+                  onClick={() => onDelete(index)}
+                  className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium"
+                >
                   🗑️ Eliminar
                 </button>
               </div>
@@ -552,12 +531,11 @@ function GalleryTab({ settings, fileInputRef, uploadingPhoto, onUpload, onDelete
           )}
         </div>
       )}
-      {!canUpload && <p className="text-xs text-yellow-400/80 text-center">✨ Galería completa — 6/6 fotos</p>}
+      {!canUpload && <p className="text-xs text-yellow-400/80 text-center">✨ Galería completa</p>}
     </div>
   );
 }
 
-// ── COLORS TAB ────────────────────────────────
 function ColorsTab({ settings, setSettings, onSave, saving }: {
   settings: BarbershopSettings;
   setSettings: React.Dispatch<React.SetStateAction<BarbershopSettings>>;
@@ -597,21 +575,28 @@ function ColorsTab({ settings, setSettings, onSave, saving }: {
           <div>
             <label className="block text-xs text-gray-400 mb-2">Color primario (fondo hero)</label>
             <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg p-3">
-              <input type="color" value={settings.primaryColor} onChange={e => setSettings(prev => ({ ...prev, primaryColor: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent" />
+              <input
+                type="color" value={settings.primaryColor}
+                onChange={e => setSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
+                className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent"
+              />
               <span className="text-sm font-mono text-gray-300">{settings.primaryColor}</span>
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-400 mb-2">Color secundario (botones)</label>
             <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg p-3">
-              <input type="color" value={settings.secondaryColor} onChange={e => setSettings(prev => ({ ...prev, secondaryColor: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent" />
+              <input
+                type="color" value={settings.secondaryColor}
+                onChange={e => setSettings(prev => ({ ...prev, secondaryColor: e.target.value }))}
+                className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent"
+              />
               <span className="text-sm font-mono text-gray-300">{settings.secondaryColor}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Preview realista */}
       <div>
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Vista previa del hero</p>
         <div className="rounded-xl overflow-hidden shadow-lg">
@@ -639,7 +624,6 @@ function ColorsTab({ settings, setSettings, onSave, saving }: {
   );
 }
 
-// ── BOTÓN GUARDAR ─────────────────────────────
 function SaveButton({ onSave, saving, label = 'Guardar cambios' }: {
   onSave: () => void;
   saving: boolean;
