@@ -159,9 +159,16 @@ export default function SettingsPage() {
       setUploadingPhoto(true);
       setErrorMsg('');
       const base64 = await fileToBase64(file);
-      const updatedPhotos = [...settings.photos, base64];
-      setSettings(prev => ({ ...prev, photos: updatedPhotos }));
-      await handleSave({ photos: updatedPhotos });
+      const res = await fetch('/api/barbershop/photos', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ photo: base64 }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErrorMsg(data.error || 'Error al subir la foto'); return; }
+      setSettings(prev => ({ ...prev, photos: data.photos }));
+      setSuccessMsg('Foto agregada');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Error al subir la foto');
     } finally {
@@ -171,9 +178,18 @@ export default function SettingsPage() {
   }
 
   async function handleDeletePhoto(indexToDelete: number) {
-    const updatedPhotos = settings.photos.filter((_, i) => i !== indexToDelete);
-    setSettings(prev => ({ ...prev, photos: updatedPhotos }));
-    await handleSave({ photos: updatedPhotos });
+    try {
+      const res = await fetch('/api/barbershop/photos', {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ index: indexToDelete }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErrorMsg(data.error || 'Error al eliminar la foto'); return; }
+      setSettings(prev => ({ ...prev, photos: data.photos }));
+    } catch {
+      setErrorMsg('Error de conexión');
+    }
   }
 
   // ── Loading ────────────────────────────────
