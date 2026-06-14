@@ -116,7 +116,7 @@ export default function HomePage() {
 
         .paths { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 64px; }
         .path-card { background: var(--gray-1); border: 1px solid var(--gray-3); border-radius: 20px; padding: 48px; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s; text-decoration: none; display: block; }
-        .path-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left, rgba(201,168,76,0.08), transparent 60%); opacity: 0; transition: opacity 0.3s; }
+        .path-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left, rgba(201,168,76,0.08), transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .path-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-4px); }
         .path-card:hover::before { opacity: 1; }
         .path-icon { width: 64px; height: 64px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 28px; }
