@@ -93,6 +93,10 @@ model Barbershop {
   // 📸 GALERÍA
   photos      String[]
 
+  // 📍 GEOLOCALIZACIÓN
+  lat         Float?
+  lng         Float?
+
   // 📊 ANALYTICS
   viewCount   Int       @default(0)
 

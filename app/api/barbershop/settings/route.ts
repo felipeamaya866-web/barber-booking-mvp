@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { geocodeAddress } from '@/lib/geocode';
 
 // ─────────────────────────────────────────────────────────────────
 // HELPERS: mapear entre colors[] del schema ↔ primaryColor/secondaryColor de la UI
@@ -110,8 +111,16 @@ export async function PUT(req: NextRequest) {
 
     if (name !== undefined)        dataToUpdate.name        = name.trim();
     if (description !== undefined) dataToUpdate.description = description;
-    if (bio !== undefined)         dataToUpdate.bio         = bio;  // ✅
-    if (address !== undefined)     dataToUpdate.address     = address;
+    if (bio !== undefined)         dataToUpdate.bio         = bio;
+    if (address !== undefined) {
+      dataToUpdate.address = address;
+      // Geocodificar la nueva dirección en segundo plano
+      const coords = await geocodeAddress(address);
+      if (coords) {
+        dataToUpdate.lat = coords.lat;
+        dataToUpdate.lng = coords.lng;
+      }
+    }
     if (phone !== undefined)       dataToUpdate.phone       = phone;
     if (photos !== undefined)      dataToUpdate.photos      = photos;
     if (logoUrl !== undefined)     dataToUpdate.logo        = logoUrl;
