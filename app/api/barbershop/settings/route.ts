@@ -40,12 +40,14 @@ export async function GET() {
         name:        true,
         slug:        true,
         description: true,
-        bio:         true,   // ✅ "Sobre Nosotros"
+        bio:         true,
         address:     true,
         phone:       true,
         colors:      true,
         photos:      true,
         logo:        true,
+        lat:         true,
+        lng:         true,
         subscription: {
           select: { plan: true, status: true },
         },

@@ -1,5 +1,5 @@
 // GET /api/public/search/nearby?lat=4.6&lng=-74.0&radius=10
-// Devuelve barberías suscritas (ACTIVE) ordenadas por distancia
+// Devuelve barberías activas o en trial ordenadas por distancia
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       where: {
         lat: { not: null },
         lng: { not: null },
-        subscription: { status: 'ACTIVE' },
+        subscription: { status: { in: ['ACTIVE', 'TRIAL'] } },
       },
       select: {
         name:        true,

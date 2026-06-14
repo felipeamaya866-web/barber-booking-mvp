@@ -21,6 +21,8 @@ interface BarbershopSettings {
   photos: string[];
   logoUrl: string;
   plan: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 type Tab = 'info' | 'bio' | 'gallery' | 'colors';
@@ -43,17 +45,34 @@ const PRESET_COLORS = [
 // HELPER: archivo a base64
 // ─────────────────────────────────────────────
 // HELPER: geocodificar dirección desde el browser (Nominatim, sin API key)
-// Agrega ", Colombia" para mejorar resultados con direcciones cortas
+// Maneja el formato colombiano "Calle X #Y-Z" con fallbacks progresivos
+async function nominatimQuery(q: string): Promise<{ lat: number; lng: number } | null> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=co`,
+    { headers: { 'User-Agent': 'BarberBooking/1.0' } }
+  );
+  const data = await res.json();
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+}
+
 async function geocodeFromBrowser(address: string): Promise<{ lat: number; lng: number } | null> {
+  if (!address?.trim()) return null;
   try {
-    const query = `${address.trim()}, Colombia`;
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'BarberBooking/1.0' } }
-    );
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const full = `${address.trim()}, Colombia`;
+    // Intento 1: dirección completa
+    const r1 = await nominatimQuery(full);
+    if (r1) return r1;
+
+    // Intento 2: quitar el número de puerta (#xxx-xx) — típico colombiano
+    // "Calle 150B #117-40" → "Calle 150B, Colombia"
+    const streetOnly = address.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim();
+    if (streetOnly !== address.trim()) {
+      const r2 = await nominatimQuery(`${streetOnly}, Colombia`);
+      if (r2) return r2;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -410,9 +429,16 @@ function InfoTab({
         <input
           type="text" value={settings.address}
           onChange={e => setSettings(prev => ({ ...prev, address: e.target.value }))}
-          placeholder="Ej: Calle 10 # 5-20, Bogotá"
+          placeholder="Ej: Calle 150B #117-40, Bogotá"
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
         />
+        <p className="text-xs mt-1.5">
+          {settings.lat && settings.lng ? (
+            <span className="text-green-400">📍 Ubicación guardada — aparecerás en búsquedas cercanas</span>
+          ) : (
+            <span className="text-gray-500">Incluye la ciudad para mejor precisión · Ej: Calle 150B #117-40, Bogotá</span>
+          )}
+        </p>
       </div>
 
       <div>
