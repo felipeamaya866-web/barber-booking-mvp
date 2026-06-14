@@ -39,7 +39,7 @@ export default function HomePage() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (slug.trim()) router.push(`/b/${slug.trim().toLowerCase()}`);
+    if (slug.trim()) router.push(`/buscar?q=${encodeURIComponent(slug.trim())}`);
   }
 
   if (status === 'loading' || status === 'authenticated') {
