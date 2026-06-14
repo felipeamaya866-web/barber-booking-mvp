@@ -42,6 +42,24 @@ const PRESET_COLORS = [
 // ─────────────────────────────────────────────
 // HELPER: archivo a base64
 // ─────────────────────────────────────────────
+// HELPER: geocodificar dirección desde el browser (Nominatim, sin API key)
+// Agrega ", Colombia" para mejorar resultados con direcciones cortas
+async function geocodeFromBrowser(address: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const query = `${address.trim()}, Colombia`;
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'BarberBooking/1.0' } }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -266,7 +284,19 @@ export default function SettingsPage() {
             logoInputRef={logoInputRef}
             uploadingLogo={uploadingLogo}
             onLogoUpload={handleLogoUpload}
-            onSave={() => handleSave({ name: settings.name, address: settings.address, phone: settings.phone })}
+            onSave={async () => {
+              const fields: Record<string, unknown> = {
+                name: settings.name,
+                address: settings.address,
+                phone: settings.phone,
+              };
+              // Geocodificar dirección desde el browser antes de guardar
+              if (settings.address) {
+                const coords = await geocodeFromBrowser(settings.address);
+                if (coords) { fields.lat = coords.lat; fields.lng = coords.lng; }
+              }
+              handleSave(fields as Parameters<typeof handleSave>[0]);
+            }}
             saving={saving}
           />
         )}
