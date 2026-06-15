@@ -89,12 +89,15 @@ export async function POST(req: NextRequest) {
       },
       update: {
         plan:              plan as PlanKey,
+        status:            'TRIAL',
         paymentSourceId,
         paymentMethodType: 'CARD',
         maxBarbers:        planData.maxBarbers,
         maxPhotos:         planData.maxPhotos,
-        // Solo actualiza fechas si es la primera vez que registra tarjeta
-        ...(barbershop.subscription?.nextChargeAt ? {} : { nextChargeAt, trialEndsAt }),
+        trialEndsAt,
+        nextChargeAt,
+        chargeFailedAt:    null,
+        endDate:           null,
       },
     });
 
