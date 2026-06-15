@@ -6,49 +6,52 @@ import { prisma } from './prisma';
 export type SubStatus = 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CANCELLED';
 
 export interface SubInfo {
-  id: string;
-  status: SubStatus;
-  plan: string;
-  trialEndsAt: Date | null;
-  endDate: Date | null;
-  maxBarbers: number;
-  maxPhotos: number;
+  id:              string;
+  status:          SubStatus;
+  plan:            string;
+  trialEndsAt:     Date | null;
+  endDate:         Date | null;
+  nextChargeAt:    Date | null;
+  chargeFailedAt:  Date | null;
+  maxBarbers:      number;
+  maxPhotos:       number;
 }
 
-// Verifica si la suscripción venció y la expira automáticamente en la BD
+// Verifica si la suscripción venció y la expira automáticamente en la BD.
+// NOTA: Si hay paymentSourceId, el cron se encarga del cobro y la expiración.
+//       checkAndExpire solo expira suscripciones sin tarjeta registrada.
 export async function checkAndExpire(barbershopId: string): Promise<SubInfo | null> {
   const sub = await prisma.subscription.findUnique({
     where: { barbershopId },
   });
   if (!sub) return null;
 
-  const now = new Date();
-  let status = sub.status as SubStatus;
+  const now    = new Date();
+  let status   = sub.status as SubStatus;
+  const tieneTarjeta = !!sub.paymentSourceId;
 
-  if (status === 'TRIAL' && sub.trialEndsAt && sub.trialEndsAt < now) {
-    await prisma.subscription.update({
-      where: { barbershopId },
-      data:  { status: 'EXPIRED' },
-    });
-    status = 'EXPIRED';
-  }
-
-  if (status === 'ACTIVE' && sub.endDate && sub.endDate < now) {
-    await prisma.subscription.update({
-      where: { barbershopId },
-      data:  { status: 'EXPIRED' },
-    });
-    status = 'EXPIRED';
+  // Solo auto-expiramos subs sin tarjeta (sin tarjeta el cron no puede cobrar)
+  if (!tieneTarjeta) {
+    if (status === 'TRIAL' && sub.trialEndsAt && sub.trialEndsAt < now) {
+      await prisma.subscription.update({ where: { barbershopId }, data: { status: 'EXPIRED' } });
+      status = 'EXPIRED';
+    }
+    if (status === 'ACTIVE' && sub.endDate && sub.endDate < now) {
+      await prisma.subscription.update({ where: { barbershopId }, data: { status: 'EXPIRED' } });
+      status = 'EXPIRED';
+    }
   }
 
   return {
-    id:          sub.id,
+    id:             sub.id,
     status,
-    plan:        sub.plan,
-    trialEndsAt: sub.trialEndsAt,
-    endDate:     sub.endDate,
-    maxBarbers:  sub.maxBarbers,
-    maxPhotos:   sub.maxPhotos,
+    plan:           sub.plan,
+    trialEndsAt:    sub.trialEndsAt,
+    endDate:        sub.endDate,
+    nextChargeAt:   sub.nextChargeAt,
+    chargeFailedAt: sub.chargeFailedAt,
+    maxBarbers:     sub.maxBarbers,
+    maxPhotos:      sub.maxPhotos,
   };
 }
 

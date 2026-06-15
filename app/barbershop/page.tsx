@@ -21,6 +21,12 @@ interface Barbershop {
   description: string | null; createdAt: string;
 }
 
+interface SubState {
+  status:         string;
+  chargeFailedAt: string | null;
+  nextChargeAt:   string | null;
+}
+
 const ACTIONS = [
   { path: '/barbershop/services', icon: '✂️', label: 'Gestionar Servicios',  sub: 'Ver y crear servicios',    bg: 'bg-blue-900/30',   text: 'text-blue-400' },
   { path: '/barbershop/agenda',   icon: '📅', label: 'Ver Agenda',           sub: 'Gestionar citas',           bg: 'bg-green-900/30',  text: 'text-green-400' },
@@ -33,9 +39,10 @@ const ACTIONS = [
 export default function BarbershopHome() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [barbershop, setBarbershop]     = useState<Barbershop | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
+  const [barbershop, setBarbershop]         = useState<Barbershop | null>(null);
+  const [sub, setSub]                       = useState<SubState | null>(null);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
   const [showLinkCopied, setShowLinkCopied] = useState(false);
 
   const publicUrl = barbershop && typeof window !== 'undefined'
@@ -55,11 +62,23 @@ export default function BarbershopHome() {
   const loadBarbershop = async () => {
     try {
       setLoading(true);
-      const res  = await fetch('/api/barbershop');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al cargar barbería');
-      if (!data.barbershop) { router.push('/barbershop/create'); return; }
-      setBarbershop(data.barbershop);
+      const [barbRes, settingsRes] = await Promise.all([
+        fetch('/api/barbershop'),
+        fetch('/api/barbershop/settings'),
+      ]);
+      const barbData = await barbRes.json();
+      if (!barbRes.ok) throw new Error(barbData.error || 'Error al cargar barbería');
+      if (!barbData.barbershop) { router.push('/barbershop/create'); return; }
+      setBarbershop(barbData.barbershop);
+
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        setSub({
+          status:         settingsData.barbershop.subscriptionStatus,
+          chargeFailedAt: settingsData.barbershop.chargeFailedAt,
+          nextChargeAt:   settingsData.barbershop.nextChargeAt,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
@@ -118,6 +137,43 @@ export default function BarbershopHome() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        {/* ── Banner: cobro fallido (período de gracia activo) ── */}
+        {sub?.chargeFailedAt && sub.status !== 'EXPIRED' && (() => {
+          const limite = new Date(new Date(sub.chargeFailedAt).getTime() + 3 * 24 * 60 * 60 * 1000);
+          const dias   = Math.max(0, Math.ceil((limite.getTime() - Date.now()) / 86_400_000));
+          return (
+            <div className="bg-orange-900/40 border border-orange-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-orange-300 font-semibold text-sm">⚠️ No pudimos cobrar tu suscripción</p>
+                <p className="text-orange-400/80 text-xs mt-0.5">
+                  Reintentaremos el cobro automáticamente.
+                  {dias > 0
+                    ? ` Tienes ${dias} día${dias !== 1 ? 's' : ''} antes de que se suspenda el servicio.`
+                    : ' Hoy es el último día antes de la suspensión.'}
+                </p>
+              </div>
+              <a href="/barbershop/plans"
+                className="shrink-0 bg-orange-500 hover:bg-orange-400 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                Actualizar tarjeta
+              </a>
+            </div>
+          );
+        })()}
+
+        {/* ── Banner: suscripción expirada ── */}
+        {(sub?.status === 'EXPIRED' || sub?.status === 'CANCELLED') && (
+          <div className="bg-red-900/40 border border-red-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-red-300 font-semibold text-sm">❌ Tu suscripción ha vencido</p>
+              <p className="text-red-400/80 text-xs mt-0.5">Renueva tu plan para volver a usar todas las funciones.</p>
+            </div>
+            <a href="/barbershop/plans"
+              className="shrink-0 bg-yellow-400 hover:bg-yellow-300 text-gray-900 px-4 py-2 rounded-lg text-xs font-bold transition">
+              Renovar plan
+            </a>
+          </div>
+        )}
 
         {/* ── Banner Página Pública ── */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-lg p-5">

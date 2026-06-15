@@ -139,6 +139,7 @@ model Subscription {
   paymentSourceId   String?   // ID de la fuente de pago en Wompi (int como string)
   paymentMethodType String?   // CARD | NEQUI | BANCOLOMBIA_TRANSFER
   nextChargeAt      DateTime? // Próxima fecha de cobro automático
+  chargeFailedAt    DateTime? // Primera vez que falló un cobro (para gracia de 3 días)
 
   barbershopId  String    @unique
   barbershop    Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)

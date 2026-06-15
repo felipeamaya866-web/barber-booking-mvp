@@ -50,7 +50,7 @@ export async function GET() {
         lat:         true,
         lng:         true,
         subscription: {
-          select: { plan: true, status: true, trialEndsAt: true, endDate: true },
+          select: { plan: true, status: true, trialEndsAt: true, endDate: true, nextChargeAt: true, chargeFailedAt: true, paymentSourceId: true },
         },
       },
     });
@@ -68,11 +68,14 @@ export async function GET() {
       barbershop: {
         ...rest,
         ...colorsToObject(colors),
-        logoUrl:            logo ?? '',
-        plan:               subFresh?.plan        ?? subscription?.plan   ?? 'LITE',
-        subscriptionStatus: subFresh?.status      ?? subscription?.status ?? 'TRIAL',
-        trialEndsAt:        subFresh?.trialEndsAt ?? null,
-        subscriptionEndDate: subFresh?.endDate    ?? null,
+        logoUrl:             logo ?? '',
+        plan:                subFresh?.plan           ?? subscription?.plan   ?? 'LITE',
+        subscriptionStatus:  subFresh?.status         ?? subscription?.status ?? 'TRIAL',
+        trialEndsAt:         subFresh?.trialEndsAt    ?? null,
+        subscriptionEndDate: subFresh?.endDate        ?? null,
+        nextChargeAt:        subFresh?.nextChargeAt   ?? null,
+        chargeFailedAt:      subFresh?.chargeFailedAt ?? null,
+        paymentSourceId:     subFresh?.paymentSourceId ?? null,
       },
     });
   } catch (error) {
