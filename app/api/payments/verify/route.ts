@@ -8,6 +8,12 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
+    // Solo el dueño autenticado puede verificar su propia transacción
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const transactionId    = searchParams.get('id');
     const env              = searchParams.get('env') || 'test';
@@ -46,6 +52,15 @@ export async function GET(req: NextRequest) {
       });
 
       if (subscription && subscription.status !== 'ACTIVE') {
+        // Verificar que la suscripción pertenece al usuario autenticado
+        const barbershop = await prisma.barbershop.findUnique({
+          where:  { ownerId: session.user.id },
+          select: { id: true },
+        });
+        if (!barbershop || subscription.barbershopId !== barbershop.id) {
+          return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+        }
+
         const ahora      = new Date();
         const proximoMes = new Date(ahora);
         proximoMes.setMonth(proximoMes.getMonth() + 1);

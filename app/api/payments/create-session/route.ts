@@ -78,17 +78,21 @@ export async function POST(req: NextRequest) {
     const firma = generarFirma(reference, planSeleccionado.precio, moneda);
 
     // Guardar referencia pendiente en la suscripción
+    // En update NO tocamos status ni trialEndsAt para no resetear el trial
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     await prisma.subscription.upsert({
       where:  { barbershopId: barbershop.id },
       create: {
         barbershopId:         barbershop.id,
         plan:                 plan as PlanKey,
         status:               'TRIAL',
+        trialEndsAt,
         maxBarbers:           planSeleccionado.maxBarbers,
         maxPhotos:            planSeleccionado.maxPhotos,
         stripeSubscriptionId: reference,
       },
       update: {
+        // Solo actualizamos plan, límites y referencia — NO el status ni trialEndsAt
         plan:                 plan as PlanKey,
         maxBarbers:           planSeleccionado.maxBarbers,
         maxPhotos:            planSeleccionado.maxPhotos,

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire } from '@/lib/subscription';
 
 // ─────────────────────────────────────────────────────────────────
 // HELPERS: mapear entre colors[] del schema ↔ primaryColor/secondaryColor de la UI
@@ -49,7 +50,7 @@ export async function GET() {
         lat:         true,
         lng:         true,
         subscription: {
-          select: { plan: true, status: true },
+          select: { plan: true, status: true, trialEndsAt: true, endDate: true },
         },
       },
     });
@@ -60,13 +61,18 @@ export async function GET() {
 
     const { colors, logo, subscription, ...rest } = barbershop;
 
+    // Auto-expirar trial o suscripción si ya venció
+    const subFresh = await checkAndExpire(barbershop.id);
+
     return NextResponse.json({
       barbershop: {
         ...rest,
         ...colorsToObject(colors),
         logoUrl:            logo ?? '',
-        plan:               subscription?.plan   ?? 'LITE',
-        subscriptionStatus: subscription?.status ?? 'TRIAL',
+        plan:               subFresh?.plan        ?? subscription?.plan   ?? 'LITE',
+        subscriptionStatus: subFresh?.status      ?? subscription?.status ?? 'TRIAL',
+        trialEndsAt:        subFresh?.trialEndsAt ?? null,
+        subscriptionEndDate: subFresh?.endDate    ?? null,
       },
     });
   } catch (error) {

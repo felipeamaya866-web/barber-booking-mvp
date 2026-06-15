@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 // ─────────────────────────────────────────────
 // HELPER: obtener barbería del usuario autenticado
@@ -59,8 +60,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Barbería no encontrada' }, { status: 404 });
     }
 
+    // Verificar suscripción activa (auto-expira si corresponde)
+    const sub = await checkAndExpire(barbershop.id);
+    if (!sub || !isActive(sub.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para agregar barberos.', subscriptionExpired: true },
+        { status: 403 }
+      );
+    }
+
     // Validar límite del plan
-    const maxBarbers = barbershop.subscription?.maxBarbers ?? 1;
+    const maxBarbers = sub.maxBarbers;
     const currentCount = await prisma.barber.count({
       where: { barbershopId: barbershop.id },
     });
