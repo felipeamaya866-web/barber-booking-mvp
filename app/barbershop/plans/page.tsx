@@ -303,8 +303,8 @@ export default function PlansPage() {
           <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl p-4 mb-6">
             <p className="text-yellow-400 font-semibold text-sm mb-1">⏳ 14 días gratis</p>
             <p className="text-gray-300 text-sm">
-              Hoy solo hacemos un cobro de <strong>$1.500 COP</strong> para verificar tu tarjeta.
-              No se cobrará el plan hasta que pasen los 14 días de prueba.
+              <strong>Hoy no se hace ningún cobro.</strong> Solo guardamos tu tarjeta.
+              El primer cobro del plan se realizará al finalizar los 14 días de prueba.
             </p>
           </div>
 
