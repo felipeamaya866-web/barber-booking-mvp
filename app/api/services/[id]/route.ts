@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 // PUT - Actualizar un servicio
 export async function PUT(
@@ -72,6 +73,14 @@ export async function PUT(
       return NextResponse.json(
         { error: 'No tienes una barbería' },
         { status: 404 }
+      );
+    }
+
+    const sub = await checkAndExpire(user.barbershop.id);
+    if (!sub || !isActive(sub.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
       );
     }
 
@@ -155,6 +164,14 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'No tienes una barbería' },
         { status: 404 }
+      );
+    }
+
+    const subDel = await checkAndExpire(user.barbershop.id);
+    if (!subDel || !isActive(subDel.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
       );
     }
 

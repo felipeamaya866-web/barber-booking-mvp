@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 // GET - Obtener todos los servicios de la barbería del usuario
 export async function GET() {
@@ -33,6 +34,7 @@ export async function GET() {
     }
 
     // Obtener los servicios de la barbería
+    // (bloqueo de suscripción solo aplica a escritura, no a lectura)
     const services = await prisma.service.findMany({
       where: { barbershopId: user.barbershop.id },
       orderBy: { createdAt: 'desc' },
@@ -100,6 +102,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'No tienes una barbería' },
         { status: 404 }
+      );
+    }
+
+    const sub = await checkAndExpire(user.barbershop.id);
+    if (!sub || !isActive(sub.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
       );
     }
 

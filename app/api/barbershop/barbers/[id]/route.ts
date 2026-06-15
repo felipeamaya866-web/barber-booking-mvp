@@ -6,11 +6,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 async function getBarberWithAuth(barberId: string, userId: string) {
   const barbershop = await prisma.barbershop.findUnique({ where: { ownerId: userId } });
-  if (!barbershop) return null;
-  return prisma.barber.findFirst({ where: { id: barberId, barbershopId: barbershop.id } });
+  if (!barbershop) return { barbershop: null, barber: null };
+  const barber = await prisma.barber.findFirst({ where: { id: barberId, barbershopId: barbershop.id } });
+  return { barbershop, barber };
 }
 
 // ─────────────────────────────────────────────
@@ -25,8 +27,16 @@ export async function PUT(
     if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const { id } = await Promise.resolve(params);
-    const barber  = await getBarberWithAuth(id, session.user.id);
-    if (!barber) return NextResponse.json({ error: 'Barbero no encontrado' }, { status: 404 });
+    const { barbershop, barber } = await getBarberWithAuth(id, session.user.id);
+    if (!barbershop || !barber) return NextResponse.json({ error: 'Barbero no encontrado' }, { status: 404 });
+
+    const sub = await checkAndExpire(barbershop.id);
+    if (!sub || !isActive(sub.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json();
     const { name, phone, email, bio, isActive, showEarnings } = body;
@@ -65,8 +75,16 @@ export async function DELETE(
     if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const { id } = await Promise.resolve(params);
-    const barber  = await getBarberWithAuth(id, session.user.id);
-    if (!barber) return NextResponse.json({ error: 'Barbero no encontrado' }, { status: 404 });
+    const { barbershop: bs2, barber } = await getBarberWithAuth(id, session.user.id);
+    if (!bs2 || !barber) return NextResponse.json({ error: 'Barbero no encontrado' }, { status: 404 });
+
+    const subDel = await checkAndExpire(bs2.id);
+    if (!subDel || !isActive(subDel.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
+      );
+    }
 
     // ✅ Borrar en orden para evitar violaciones de FK
     await prisma.$transaction([

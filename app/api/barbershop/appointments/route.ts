@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 // ─────────────────────────────────────────────
 // GET /api/barbershop/appointments?from=YYYY-MM-DD&to=YYYY-MM-DD&barberId=xxx
@@ -61,6 +62,14 @@ export async function POST(req: NextRequest) {
 
     const barbershop = await prisma.barbershop.findUnique({ where: { ownerId: session.user.id } });
     if (!barbershop) return NextResponse.json({ error: 'Barbería no encontrada' }, { status: 404 });
+
+    const sub = await checkAndExpire(barbershop.id);
+    if (!sub || !isActive(sub.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
+      );
+    }
 
     const { serviceId, barberId, datetime, guestName, guestPhone, notes } = await req.json();
 

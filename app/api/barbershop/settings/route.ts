@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { checkAndExpire } from '@/lib/subscription';
+import { checkAndExpire, isActive } from '@/lib/subscription';
 
 // ─────────────────────────────────────────────────────────────────
 // HELPERS: mapear entre colors[] del schema ↔ primaryColor/secondaryColor de la UI
@@ -109,6 +109,18 @@ export async function PUT(req: NextRequest) {
       lat,
       lng,
     } = body;
+
+    // Verificar suscripción activa antes de permitir edición
+    const barbershopForCheck = await prisma.barbershop.findUnique({ where: { ownerId: session.user.id }, select: { id: true } });
+    if (barbershopForCheck) {
+      const sub = await checkAndExpire(barbershopForCheck.id);
+      if (!sub || !isActive(sub.status)) {
+        return NextResponse.json(
+          { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+          { status: 403 }
+        );
+      }
+    }
 
     // Validación básica
     if (name !== undefined && name.trim().length < 2) {

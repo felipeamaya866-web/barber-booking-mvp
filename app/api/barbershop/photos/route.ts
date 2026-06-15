@@ -83,6 +83,14 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Barbería no encontrada' }, { status: 404 });
     }
 
+    const subDel = await checkAndExpire(barbershop.id);
+    if (!subDel || !isActive(subDel.status)) {
+      return NextResponse.json(
+        { error: 'Tu suscripción ha vencido. Renueva tu plan para continuar.', subscriptionExpired: true },
+        { status: 403 }
+      );
+    }
+
     const updatedPhotos = barbershop.photos.filter((_, i) => i !== index);
 
     const updated = await prisma.barbershop.update({
