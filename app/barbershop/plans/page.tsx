@@ -149,7 +149,11 @@ export default function PlansPage() {
     try {
       const res  = await fetch('/api/payments/acceptance-tokens');
       const data = await res.json();
-      if (res.ok) setTokens(data);
+      if (res.ok) {
+        setTokens(data);
+      } else {
+        setError(data.error || 'No se pudo conectar con Wompi. Intenta de nuevo.');
+      }
     } catch {
       setError('No se pudo conectar con Wompi. Intenta de nuevo.');
     }
@@ -301,9 +305,21 @@ export default function PlansPage() {
           </div>
 
           {!tokens ? (
-            <div className="flex items-center justify-center py-12 gap-3 text-gray-400">
-              <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-              Conectando con Wompi...
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              {error ? (
+                <>
+                  <p className="text-red-400 text-sm text-center">❌ {error}</p>
+                  <button onClick={() => handleSelectPlan(selectedPlan!)}
+                    className="bg-yellow-400 text-gray-900 px-6 py-2 rounded-lg text-sm font-bold hover:bg-yellow-300 transition">
+                    Reintentar
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-3 text-gray-400">
+                  <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+                  Conectando con Wompi...
+                </div>
+              )}
             </div>
           ) : (
             <form onSubmit={handleRegistrarTarjeta} className="space-y-5">
