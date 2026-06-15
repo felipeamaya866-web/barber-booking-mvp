@@ -95,14 +95,27 @@ export async function POST(req: NextRequest) {
 
     const chargeData = await chargeRes.json();
     const status     = chargeData.data?.status as string;
+    const declineReason = chargeData.data?.payment_method_info?.decline_reason ?? '';
 
-    console.log(`[REGISTER] Cobro verificación ${reference}: ${status}`);
+    console.log(`[REGISTER] Cobro verificación ${reference}:`, JSON.stringify({
+      status,
+      declineReason,
+      transactionId: chargeData.data?.id,
+      statusMessage: chargeData.data?.status_message,
+    }));
 
-    if (status !== 'APPROVED') {
+    if (status === 'PENDING') {
       return NextResponse.json(
-        { error: 'Tu tarjeta fue rechazada. Verifica que tenga fondos y esté habilitada para pagos en línea.' },
+        { error: 'Tu banco requiere verificación adicional (3D Secure / OTP). Habilita compras por internet en tu app bancaria e intenta de nuevo.' },
         { status: 422 },
       );
+    }
+
+    if (status !== 'APPROVED') {
+      const msg = declineReason
+        ? `Tarjeta rechazada (${declineReason}). Verifica que esté habilitada para pagos en línea.`
+        : 'Tu tarjeta fue rechazada. Habilita compras por internet en tu app bancaria e intenta de nuevo.';
+      return NextResponse.json({ error: msg }, { status: 422 });
     }
 
     // ─── PASO 3: Guardar y crear TRIAL ───────────────────────────────────────
