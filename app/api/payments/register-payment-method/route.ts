@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { WOMPI_BASE, PLAN_CONFIG, generarFirma, type PlanKey } from '@/lib/plans';
 
-const VERIFICACION_MONTO = 200000; // $2.000 COP en centavos (mínimo Wompi prod es $1.500)
+const VERIFICACION_MONTO = 150000; // $1.500 COP en centavos (mínimo permitido por Wompi)
 
 export async function POST(req: NextRequest) {
   try {
