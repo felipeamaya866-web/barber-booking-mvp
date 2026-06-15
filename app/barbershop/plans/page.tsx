@@ -522,7 +522,7 @@ export default function PlansPage() {
           <p className="text-gray-400">
             {hasCard
               ? 'Cambia de plan cuando quieras. El cambio aplica al próximo ciclo de cobro.'
-              : '14 días gratis • Solo $100 COP de verificación hoy • Cancela cuando quieras'}
+              : '14 días gratis • Sin cobro hoy • Cancela cuando quieras'}
           </p>
         </div>
 

@@ -15,6 +15,7 @@ export interface SubInfo {
   chargeFailedAt:  Date | null;
   maxBarbers:      number;
   maxPhotos:       number;
+  paymentSourceId: string | null;
 }
 
 // Verifica si la suscripción venció y la expira automáticamente en la BD.
@@ -43,15 +44,16 @@ export async function checkAndExpire(barbershopId: string): Promise<SubInfo | nu
   }
 
   return {
-    id:             sub.id,
+    id:              sub.id,
     status,
-    plan:           sub.plan,
-    trialEndsAt:    sub.trialEndsAt,
-    endDate:        sub.endDate,
-    nextChargeAt:   sub.nextChargeAt,
-    chargeFailedAt: sub.chargeFailedAt,
-    maxBarbers:     sub.maxBarbers,
-    maxPhotos:      sub.maxPhotos,
+    plan:            sub.plan,
+    trialEndsAt:     sub.trialEndsAt,
+    endDate:         sub.endDate,
+    nextChargeAt:    sub.nextChargeAt,
+    chargeFailedAt:  sub.chargeFailedAt,
+    maxBarbers:      sub.maxBarbers,
+    maxPhotos:       sub.maxPhotos,
+    paymentSourceId: sub.paymentSourceId,
   };
 }
 
