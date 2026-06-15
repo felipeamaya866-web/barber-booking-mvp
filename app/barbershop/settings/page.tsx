@@ -41,6 +41,59 @@ const PRESET_COLORS = [
   { label: 'Gris Plata',     primary: '#1F2937', secondary: '#9CA3AF' },
 ];
 
+const VIA_TYPES = [
+  'Calle', 'Carrera', 'Avenida', 'Av. Calle', 'Av. Carrera',
+  'Diagonal', 'Transversal', 'Circular', 'Vía',
+];
+
+const CITIES = [
+  'Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena',
+  'Cúcuta', 'Bucaramanga', 'Pereira', 'Santa Marta', 'Ibagué',
+  'Pasto', 'Manizales', 'Neiva', 'Villavicencio', 'Armenia',
+  'Valledupar', 'Montería', 'Sincelejo', 'Popayán', 'Floridablanca',
+  'Soacha', 'Bello', 'Soledad', 'Itagüí', 'Palmira',
+];
+
+interface AddressParts {
+  viaType: string;
+  viaNum: string;
+  cruce: string;
+  puerta: string;
+  complemento: string;
+  ciudad: string;
+}
+
+function parseAddress(address: string): AddressParts {
+  const d: AddressParts = { viaType: 'Calle', viaNum: '', cruce: '', puerta: '', complemento: '', ciudad: '' };
+  if (!address?.trim()) return d;
+  const lastComma = address.lastIndexOf(',');
+  const ciudad = lastComma >= 0 ? address.substring(lastComma + 1).trim() : '';
+  const withoutCity = lastComma >= 0 ? address.substring(0, lastComma).trim() : address;
+  const types = ['Av. Calle','Av. Carrera','Avenida Calle','Avenida Carrera','Avenida','Transversal','Diagonal','Circular','Carrera','Calle','Vía'];
+  let viaType = 'Calle'; let rest = withoutCity;
+  for (const t of types) {
+    if (withoutCity.toLowerCase().startsWith(t.toLowerCase())) {
+      viaType = t; rest = withoutCity.substring(t.length).trim(); break;
+    }
+  }
+  const hashIdx = rest.indexOf('#');
+  const viaNum   = (hashIdx >= 0 ? rest.substring(0, hashIdx) : rest).trim();
+  const afterHash = hashIdx >= 0 ? rest.substring(hashIdx + 1) : '';
+  const dashIdx  = afterHash.indexOf('-');
+  const cruce    = (dashIdx >= 0 ? afterHash.substring(0, dashIdx) : afterHash).trim();
+  const puerta   = dashIdx >= 0 ? afterHash.substring(dashIdx + 1).trim() : '';
+  return { viaType, viaNum, cruce, puerta, complemento: '', ciudad };
+}
+
+function buildAddress(p: AddressParts): string {
+  if (!p.viaNum.trim()) return p.ciudad.trim();
+  let addr = `${p.viaType} ${p.viaNum.trim()}`;
+  if (p.cruce.trim() || p.puerta.trim()) addr += ` #${p.cruce.trim()}-${p.puerta.trim()}`;
+  if (p.complemento.trim()) addr += `, ${p.complemento.trim()}`;
+  if (p.ciudad.trim()) addr += `, ${p.ciudad.trim()}`;
+  return addr;
+}
+
 // ─────────────────────────────────────────────
 // HELPER: archivo a base64
 // ─────────────────────────────────────────────
@@ -303,19 +356,7 @@ export default function SettingsPage() {
             logoInputRef={logoInputRef}
             uploadingLogo={uploadingLogo}
             onLogoUpload={handleLogoUpload}
-            onSave={async () => {
-              const fields: Record<string, unknown> = {
-                name: settings.name,
-                address: settings.address,
-                phone: settings.phone,
-              };
-              // Geocodificar dirección desde el browser antes de guardar
-              if (settings.address) {
-                const coords = await geocodeFromBrowser(settings.address);
-                if (coords) { fields.lat = coords.lat; fields.lng = coords.lng; }
-              }
-              handleSave(fields as Parameters<typeof handleSave>[0]);
-            }}
+            onSave={handleSave}
             saving={saving}
           />
         )}
@@ -366,11 +407,40 @@ function InfoTab({
   logoInputRef: React.RefObject<HTMLInputElement | null>;
   uploadingLogo: boolean;
   onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSave: () => void;
+  onSave: (fields: Partial<BarbershopSettings>) => void;
   saving: boolean;
 }) {
+  const [parts, setParts] = useState<AddressParts>(() => parseAddress(settings.address));
+  const [geocoding, setGeocoding] = useState(false);
+
+  const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:border-yellow-400 focus:outline-none transition-colors text-sm';
+  const inputClass  = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors text-sm';
+
+  const set = (key: keyof AddressParts) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setParts((prev: AddressParts) => ({ ...prev, [key]: e.target.value }));
+
+  const builtAddress = buildAddress(parts);
+
+  async function handleSaveInfo() {
+    setGeocoding(true);
+    const fields: Partial<BarbershopSettings> & { lat?: number; lng?: number } = {
+      name:    settings.name,
+      phone:   settings.phone,
+      address: builtAddress,
+    };
+    if (parts.ciudad && parts.viaNum) {
+      // Geocodificar con calle + ciudad (sin número de puerta, más preciso en Nominatim)
+      const geocodeQuery = `${parts.viaType} ${parts.viaNum}, ${parts.ciudad}, Colombia`;
+      const coords = await geocodeFromBrowser(geocodeQuery);
+      if (coords) { fields.lat = coords.lat; fields.lng = coords.lng; }
+    }
+    setGeocoding(false);
+    onSave(fields);
+  }
+
   return (
     <div className="space-y-5">
+      {/* ── Logo ─────────────────────────────── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-3">Logo de la barbería</label>
         <div className="flex items-center gap-4">
@@ -414,43 +484,90 @@ function InfoTab({
 
       <div className="border-t border-gray-800" />
 
+      {/* ── Nombre ───────────────────────────── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre de la barbería</label>
         <input
           type="text" value={settings.name}
           onChange={e => setSettings(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="Ej: Barbería El Clasico"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
+          placeholder="Ej: Barbería El Clásico"
+          className={inputClass}
         />
       </div>
 
+      {/* ── Dirección estructurada ───────────── */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">Dirección</label>
-        <input
-          type="text" value={settings.address}
-          onChange={e => setSettings(prev => ({ ...prev, address: e.target.value }))}
-          placeholder="Ej: Calle 150B #117-40, Bogotá"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
-        />
-        <p className="text-xs mt-1.5">
-          {settings.lat && settings.lng ? (
-            <span className="text-green-400">📍 Ubicación guardada — aparecerás en búsquedas cercanas</span>
-          ) : (
-            <span className="text-gray-500">Incluye la ciudad para mejor precisión · Ej: Calle 150B #117-40, Bogotá</span>
-          )}
-        </p>
+        <label className="block text-sm font-medium text-gray-300 mb-3">Dirección</label>
+        <div className="space-y-2">
+
+          {/* Fila 1: tipo de vía + número */}
+          <div className="flex gap-2">
+            <div className="w-40 shrink-0">
+              <label className="block text-xs text-gray-500 mb-1">Tipo de vía</label>
+              <select value={parts.viaType} onChange={set('viaType')} className={selectClass}>
+                {VIA_TYPES.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1">Número de vía</label>
+              <input value={parts.viaNum} onChange={set('viaNum')} placeholder="150B" className={inputClass} />
+            </div>
+          </div>
+
+          {/* Fila 2: cruce y puerta */}
+          <div className="flex gap-2 items-end">
+            <span className="text-gray-400 text-lg pb-3">#</span>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1">Cruce</label>
+              <input value={parts.cruce} onChange={set('cruce')} placeholder="117" className={inputClass} />
+            </div>
+            <span className="text-gray-400 text-lg pb-3">—</span>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1">Puerta</label>
+              <input value={parts.puerta} onChange={set('puerta')} placeholder="40" className={inputClass} />
+            </div>
+          </div>
+
+          {/* Fila 3: complemento */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Complemento <span className="text-gray-600">(opcional)</span></label>
+            <input value={parts.complemento} onChange={set('complemento')} placeholder="Ej: Local 3, Apto 201, Torre B" className={inputClass} />
+          </div>
+
+          {/* Fila 4: ciudad */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Ciudad</label>
+            <select value={parts.ciudad} onChange={set('ciudad')} className={selectClass}>
+              <option value="">Selecciona una ciudad</option>
+              {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Preview de la dirección construida */}
+        {builtAddress && (
+          <div className="mt-3 bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2 flex items-center gap-2">
+            <span className="text-xs text-gray-500 shrink-0">Vista previa:</span>
+            <span className="text-xs text-white font-mono">{builtAddress}</span>
+            {settings.lat && settings.lng && (
+              <span className="ml-auto text-xs text-green-400 shrink-0">📍 Ubicada</span>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* ── Teléfono ─────────────────────────── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">Teléfono / WhatsApp</label>
         <input
           type="tel" value={settings.phone}
           onChange={e => setSettings(prev => ({ ...prev, phone: e.target.value }))}
           placeholder="Ej: +57 300 000 0000"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
+          className={inputClass}
         />
       </div>
 
+      {/* ── Slug ─────────────────────────────── */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">URL de tu landing page</label>
         <div className="flex items-center bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
@@ -460,7 +577,11 @@ function InfoTab({
         <p className="text-xs text-gray-500 mt-1">El slug no se puede cambiar después del setup.</p>
       </div>
 
-      <SaveButton onSave={onSave} saving={saving} />
+      <SaveButton
+        onSave={handleSaveInfo}
+        saving={saving || geocoding}
+        label={geocoding ? 'Obteniendo ubicación...' : 'Guardar cambios'}
+      />
     </div>
   );
 }
