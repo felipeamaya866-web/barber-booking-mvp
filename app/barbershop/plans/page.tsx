@@ -299,14 +299,25 @@ export default function PlansPage() {
 
         <div className="max-w-lg mx-auto px-4 py-8">
 
-          {/* Info trial */}
-          <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl p-4 mb-6">
-            <p className="text-yellow-400 font-semibold text-sm mb-1">⏳ 14 días gratis</p>
-            <p className="text-gray-300 text-sm">
-              <strong>Hoy no se hace ningún cobro.</strong> Solo guardamos tu tarjeta.
-              El primer cobro del plan se realizará al finalizar los 14 días de prueba.
-            </p>
-          </div>
+          {/* Info trial / reactivación */}
+          {subscription?.trialEndsAt ? (
+            <div className="bg-blue-400/10 border border-blue-400/30 rounded-xl p-4 mb-6">
+              <p className="text-blue-400 font-semibold text-sm mb-1">💳 Reactivar suscripción</p>
+              <p className="text-gray-300 text-sm">
+                Ya usaste el período de prueba. Al registrar tu tarjeta se cobrará{' '}
+                <strong>{formatPrecio(PLANES.find(p => p.key === selectedPlan)?.precio ?? 0)}</strong>{' '}
+                inmediatamente y tendrás acceso por 30 días.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-xl p-4 mb-6">
+              <p className="text-yellow-400 font-semibold text-sm mb-1">⏳ 14 días gratis</p>
+              <p className="text-gray-300 text-sm">
+                <strong>Hoy no se hace ningún cobro.</strong> Solo guardamos tu tarjeta.
+                El primer cobro del plan se realizará al finalizar los 14 días de prueba.
+              </p>
+            </div>
+          )}
 
           {!tokens ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
@@ -426,6 +437,8 @@ export default function PlansPage() {
                     <span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                     Verificando tarjeta...
                   </>
+                ) : subscription?.trialEndsAt ? (
+                  `Registrar tarjeta y activar plan`
                 ) : (
                   `Registrar tarjeta y comenzar prueba gratis`
                 )}
