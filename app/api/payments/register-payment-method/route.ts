@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
     const sourceData = await sourceRes.json();
 
     if (!sourceRes.ok || sourceData.data?.status !== 'AVAILABLE') {
-      console.error('[REGISTER] Error creando fuente de pago:', sourceData);
+      console.error('[REGISTER] Error creando fuente de pago:', JSON.stringify(sourceData));
+      console.error('[REGISTER] Datos enviados:', JSON.stringify({ type: 'CARD', token: cardToken?.slice(0,10)+'...', customer_email: customerEmail, acceptance_token: acceptanceToken?.slice(0,20)+'...', accept_personal_auth: acceptPersonalAuth?.slice(0,20)+'...' }));
       return NextResponse.json(
         { error: 'No pudimos registrar tu tarjeta. Verifica los datos e intenta de nuevo.' },
         { status: 422 },
