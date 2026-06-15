@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { WOMPI_BASE, PLAN_CONFIG, generarFirma, type PlanKey } from '@/lib/plans';
 
-const VERIFICACION_MONTO = 10000; // $100 COP en centavos
+const VERIFICACION_MONTO = 100000; // $1.000 COP en centavos (mínimo seguro para producción)
 
 export async function POST(req: NextRequest) {
   try {
@@ -98,12 +98,7 @@ export async function POST(req: NextRequest) {
     const status     = chargeData.data?.status as string;
     const declineReason = chargeData.data?.payment_method_info?.decline_reason ?? '';
 
-    console.log(`[REGISTER] Cobro verificación ${reference}:`, JSON.stringify({
-      status,
-      declineReason,
-      transactionId: chargeData.data?.id,
-      statusMessage: chargeData.data?.status_message,
-    }));
+    console.log(`[REGISTER] Cobro verificación ${reference} HTTP ${chargeRes.status}:`, JSON.stringify(chargeData));
 
     if (status === 'PENDING') {
       return NextResponse.json(
