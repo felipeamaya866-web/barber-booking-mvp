@@ -21,6 +21,9 @@ interface BarbershopSettings {
   photos: string[];
   logoUrl: string;
   plan: string;
+  subscriptionStatus?: string;
+  trialEndsAt?: string | null;
+  subscriptionEndDate?: string | null;
   lat?: number | null;
   lng?: number | null;
 }
@@ -320,6 +323,15 @@ export default function SettingsPage() {
 
       {/* Mensajes */}
       <div className="max-w-2xl mx-auto px-4 pt-4">
+        {/* Banner suscripción vencida */}
+        {(settings.subscriptionStatus === 'EXPIRED' || settings.subscriptionStatus === 'CANCELLED') && (
+          <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4 flex items-center justify-between gap-3">
+            <span>⚠️ Tu suscripción ha vencido. Algunas funciones están bloqueadas.</span>
+            <a href="/barbershop/plans" className="shrink-0 bg-yellow-400 text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-300 transition">
+              Renovar plan
+            </a>
+          </div>
+        )}
         {successMsg && (
           <div className="bg-green-900/40 border border-green-700 text-green-300 px-4 py-3 rounded-lg text-sm mb-4">
             ✅ {successMsg}

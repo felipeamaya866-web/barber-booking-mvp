@@ -176,6 +176,13 @@ export default function PlansPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-10">
 
+        {/* Suscripción vencida */}
+        {(subscription?.status === 'EXPIRED' || subscription?.status === 'CANCELLED') && (
+          <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-4 rounded-xl mb-6 text-sm">
+            ⚠️ <strong>Tu suscripción ha vencido.</strong> Selecciona un plan para renovar tu acceso y volver a usar todas las funciones.
+          </div>
+        )}
+
         {/* Plan actual */}
         {subscription && (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-8 flex items-center justify-between">
@@ -279,9 +286,10 @@ export default function PlansPage() {
                         <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         Procesando...
                       </>
-                    ) : (
-                      `Elegir ${plan.nombre}`
-                    )}
+                    ) : (subscription?.status === 'EXPIRED' || subscription?.status === 'CANCELLED')
+                      ? `Renovar con ${plan.nombre}`
+                      : `Elegir ${plan.nombre}`
+                    }
                   </button>
                 )}
               </div>

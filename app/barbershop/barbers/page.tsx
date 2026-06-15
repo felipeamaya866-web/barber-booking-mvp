@@ -74,7 +74,15 @@ export default function BarbersPage() {
       const method = editingBarber ? 'PUT' : 'POST';
       const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data   = await res.json();
-      if (!res.ok) { setErrorMsg(data.error || 'Error al guardar'); return; }
+      if (!res.ok) {
+        if (data.subscriptionExpired) {
+          setShowModal(false);
+          setErrorMsg('__EXPIRED__');
+        } else {
+          setErrorMsg(data.error || 'Error al guardar');
+        }
+        return;
+      }
       await fetchBarbers();
       setShowModal(false); setEditingBarber(null); setForm(EMPTY_FORM);
       setSuccessMsg(editingBarber ? 'Barbero actualizado ✅' : 'Barbero agregado ✅');
@@ -170,7 +178,13 @@ export default function BarbersPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {successMsg && <div className="bg-green-900/40 border border-green-700 text-green-300 px-4 py-3 rounded-lg text-sm mb-4">{successMsg}</div>}
-        {errorMsg && !showModal && <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4">❌ {errorMsg}</div>}
+        {errorMsg === '__EXPIRED__' && (
+          <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4 flex items-center justify-between gap-3">
+            <span>⚠️ Tu suscripción ha vencido. No puedes agregar barberos.</span>
+            <a href="/barbershop/plans" className="shrink-0 bg-yellow-400 text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-300 transition">Renovar plan</a>
+          </div>
+        )}
+        {errorMsg && errorMsg !== '__EXPIRED__' && !showModal && <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4">❌ {errorMsg}</div>}
 
         {barbers.length === 0 ? (
           <div onClick={() => { setEditingBarber(null); setForm(EMPTY_FORM); setShowModal(true); }}
