@@ -135,6 +135,11 @@ model Subscription {
   stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
 
+  // Wompi cobros automáticos
+  paymentSourceId   String?   // ID de la fuente de pago en Wompi (int como string)
+  paymentMethodType String?   // CARD | NEQUI | BANCOLOMBIA_TRANSFER
+  nextChargeAt      DateTime? // Próxima fecha de cobro automático
+
   barbershopId  String    @unique
   barbershop    Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 
