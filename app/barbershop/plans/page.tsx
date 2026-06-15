@@ -91,6 +91,8 @@ export default function PlansPage() {
   const [procesando, setProcesando]     = useState(false);
   const [error, setError]               = useState('');
   const [successMsg, setSuccessMsg]     = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelando, setCancelando]     = useState(false);
 
   useEffect(() => { fetchSubscription(); }, []);
 
@@ -110,6 +112,29 @@ export default function PlansPage() {
       setError('No se pudo cargar el plan actual');
     } finally {
       setLoading(false);
+    }
+  }
+
+  // ── Cancelar suscripción ───────────────────────────────────────────────────
+  async function handleCancelar() {
+    try {
+      setCancelando(true);
+      setError('');
+      const res  = await fetch('/api/payments/cancel-subscription', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Error al cancelar'); return; }
+      setShowCancelModal(false);
+      await fetchSubscription();
+      setSuccessMsg(
+        data.accessUntil
+          ? `Cancelado. Conservas acceso hasta el ${new Date(data.accessUntil).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}.`
+          : 'Suscripción cancelada correctamente.'
+      );
+      setTimeout(() => setSuccessMsg(''), 6000);
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setCancelando(false);
     }
   }
 
@@ -540,7 +565,59 @@ export default function PlansPage() {
             Puedes cancelar en cualquier momento · Sin contratos
           </p>
         </div>
+
+        {/* ── Cancelar suscripción ── */}
+        {hasCard && (subscription?.status === 'ACTIVE' || subscription?.status === 'TRIAL') && (
+          <div className="mt-10 border-t border-gray-800 pt-8 text-center">
+            <p className="text-gray-500 text-sm mb-3">¿Deseas cancelar tu suscripción?</p>
+            <button onClick={() => setShowCancelModal(true)}
+              className="text-red-400 hover:text-red-300 text-sm underline transition">
+              Cancelar renovación automática
+            </button>
+          </div>
+        )}
+
+        {/* ── Mensaje de éxito ── */}
+        {successMsg && (
+          <div className="mt-6 bg-green-900/40 border border-green-700 text-green-300 px-4 py-3 rounded-xl text-sm text-center">
+            ✅ {successMsg}
+          </div>
+        )}
+
       </div>
+
+      {/* ── Modal confirmación cancelar ── */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm p-6 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-lg font-bold text-white mb-2">¿Cancelar suscripción?</h2>
+            <p className="text-gray-400 text-sm mb-2">
+              {subscription?.status === 'TRIAL'
+                ? 'Podrás seguir usando la app durante el período de prueba, pero no se hará el cobro al finalizar.'
+                : subscription?.subscriptionEndDate
+                  ? `Conservarás acceso hasta el ${new Date(subscription.subscriptionEndDate).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}. Después se suspenderá el servicio.`
+                  : 'Conservarás acceso hasta que venza el período actual.'
+              }
+            </p>
+            <p className="text-gray-500 text-xs mb-6">No se realizarán más cobros automáticos.</p>
+            {error && <p className="text-red-400 text-sm mb-4">❌ {error}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => { setShowCancelModal(false); setError(''); }}
+                className="flex-1 bg-gray-700 text-white py-3 rounded-xl text-sm hover:bg-gray-600 transition">
+                Volver
+              </button>
+              <button onClick={handleCancelar} disabled={cancelando}
+                className="flex-1 bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                {cancelando
+                  ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Cancelando...</>
+                  : 'Sí, cancelar'
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
