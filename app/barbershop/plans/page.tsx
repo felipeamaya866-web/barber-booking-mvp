@@ -200,7 +200,11 @@ export default function PlansPage() {
       const tokenData = await tokenRes.json();
 
       if (tokenData.status !== 'CREATED' || !tokenData.data?.id) {
-        setError('No se pudo tokenizar la tarjeta. Verifica los datos.');
+        const msgs = tokenData.error?.messages;
+        const detail = msgs
+          ? Object.entries(msgs).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+          : tokenData.error?.type ?? JSON.stringify(tokenData);
+        setError(`Error Wompi: ${detail}`);
         return;
       }
 
