@@ -77,7 +77,8 @@ export default function HomePage() {
 
         nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 20px 48px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(8,8,8,0.95), transparent); backdrop-filter: blur(8px); }
         .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--gold), var(--gold-dk)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(201,168,76,0.3); }
+        .logo-icon { width: 42px; height: 42px; background: var(--black); border: 1px solid rgba(201,168,76,0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+        .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
         .logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--white); }
         .logo-text span { color: var(--gold); }
         .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
@@ -202,7 +203,7 @@ export default function HomePage() {
       {/* NAVBAR */}
       <nav>
         <a href="#" className="logo">
-          <div className="logo-icon">✂️</div>
+          <div className="logo-icon"><img src="/logo-icon-square.png" alt="BarberBooking" /></div>
           <span className="logo-text">Barber<span>Booking</span></span>
         </a>
         <ul className="nav-links">
@@ -413,7 +414,7 @@ export default function HomePage() {
         <div className="footer-top">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div className="logo-icon" style={{ width: 32, height: 32, fontSize: 14 }}>✂️</div>
+              <div className="logo-icon" style={{ width: 32, height: 32 }}><img src="/logo-icon-square.png" alt="BarberBooking" /></div>
               <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: 'var(--white)' }}>
                 Barber<span style={{ color: 'var(--gold)' }}>Booking</span>
               </span>

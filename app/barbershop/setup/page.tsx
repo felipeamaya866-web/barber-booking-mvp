@@ -78,7 +78,7 @@ export default function SetupWizard() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-xl flex items-center justify-center text-lg">✂️</div>
+            <div className="w-10 h-10 bg-gray-950 border border-yellow-600/30 rounded-xl flex items-center justify-center overflow-hidden"><img src="/logo-icon-square.png" alt="BarberBooking" className="w-full h-full object-cover" /></div>
             <span style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 700, color: '#F5F0E8' }}>
               Barber<span style={{ color: '#C9A84C' }}>Booking</span>
             </span>

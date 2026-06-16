@@ -83,14 +83,16 @@ function LoginContent() {
         .logo-icon {
           width: 48px;
           height: 48px;
-          background: linear-gradient(135deg, #E8C96A, #8B6914);
+          background: #080808;
+          border: 1px solid rgba(201,168,76,0.3);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
-          box-shadow: 0 0 24px rgba(201,168,76,0.3);
+          overflow: hidden;
+          box-shadow: 0 0 24px rgba(201,168,76,0.2);
         }
+        .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
         .logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #F5F0E8; }
         .logo-text span { color: #C9A84C; }
         .divider { width: 40px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent); margin: 0 auto 32px; }
@@ -125,7 +127,7 @@ function LoginContent() {
       <div className="login-bg">
         <div className="login-card">
           <div className="logo-wrap">
-            <div className="logo-icon">✂️</div>
+            <div className="logo-icon"><img src="/logo-icon-square.png" alt="BarberBooking" /></div>
             <span className="logo-text">Barber<span>Booking</span></span>
           </div>
           <div className="divider" />

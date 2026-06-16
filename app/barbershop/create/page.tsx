@@ -66,7 +66,7 @@ function CreateBarbershopContent() {
       <div className="max-w-2xl mx-auto">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-xl flex items-center justify-center text-lg">✂️</div>
+          <div className="w-10 h-10 bg-gray-950 border border-yellow-600/30 rounded-xl flex items-center justify-center overflow-hidden"><img src="/logo-icon-square.png" alt="BarberBooking" className="w-full h-full object-cover" /></div>
           <span style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 700, color: '#F5F0E8' }}>
             Barber<span style={{ color: '#C9A84C' }}>Booking</span>
           </span>
