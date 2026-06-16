@@ -117,13 +117,13 @@ export default function HomePage() {
         .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 50%); }
         .hero-lines { position: absolute; inset: 0; background-image: linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%); }
         .hero-content { position: relative; text-align: center; max-width: 820px; }
-        .hero-mark { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 36px; animation: fadeDown 0.7s ease both; opacity: 0.92; }
-        .hero-mark-icon { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; opacity: 0.9; }
-        .hero-mark-divider { width: 1px; height: 20px; background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.5), transparent); }
-        .hero-mark-text { font-size: 12px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: rgba(245,240,232,0.65); }
-        .hero-mark-text span { color: var(--gold); font-weight: 600; }
+        .hero-mark { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 28px; padding-bottom: 28px; position: relative; animation: fadeDown 0.7s ease both; }
+        .hero-mark::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 1px; height: 28px; background: linear-gradient(to bottom, rgba(201,168,76,0.55), transparent); }
+        .hero-mark-icon { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; box-shadow: 0 0 0 1px rgba(201,168,76,0.25), 0 0 50px rgba(201,168,76,0.35), 0 0 100px rgba(201,168,76,0.12); }
+        .hero-mark-text { font-size: 13px; font-weight: 500; letter-spacing: 5px; text-transform: uppercase; color: rgba(245,240,232,0.7); }
+        .hero-mark-text span { color: var(--gold); font-weight: 700; }
         .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); padding: 6px 16px; border-radius: 999px; font-size: 12px; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 32px; animation: fadeDown 0.8s 0.1s ease both; }
-        .hero-title { font-size: clamp(48px, 8vw, 96px); font-weight: 900; line-height: 1.0; letter-spacing: -2px; margin-bottom: 24px; animation: fadeUp 0.8s 0.1s ease both; }
+        .hero-title { font-size: clamp(42px, 7.2vw, 86px); font-weight: 900; line-height: 1.0; letter-spacing: -2px; margin-bottom: 24px; animation: fadeUp 0.8s 0.1s ease both; }
         .hero-title .gold { color: var(--gold); }
         .hero-title .outline { -webkit-text-stroke: 1px rgba(245,240,232,0.3); color: transparent; }
         .hero-sub { font-size: 18px; color: rgba(245,240,232,0.55); font-weight: 300; max-width: 520px; margin: 0 auto 48px; line-height: 1.7; animation: fadeUp 0.8s 0.2s ease both; }
@@ -254,7 +254,6 @@ export default function HomePage() {
         <div className="hero-content">
           <div className="hero-mark reveal">
             <img className="hero-mark-icon" src="/logo-icon-square.png" alt="BarberBooking" />
-            <span className="hero-mark-divider" />
             <span className="hero-mark-text">Barber<span>Booking</span></span>
           </div>
           <div className="hero-badge">✦ La plataforma de barberías #1 en Colombia</div>
