@@ -714,9 +714,21 @@ export default function PlansPage() {
               <h2 className="text-lg font-bold text-white">📄 Solicitar cuenta de cobro</h2>
               <button onClick={() => setShowInvoiceModal(false)} className="text-gray-400 hover:text-white text-xl">×</button>
             </div>
-            <p className="text-gray-500 text-xs mb-5">
+            <p className="text-gray-500 text-xs mb-4">
               No emitimos factura electrónica (persona natural). Con estos datos te generamos una cuenta de cobro y te la enviamos por correo.
             </p>
+
+            <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3.5 mb-5 text-xs text-gray-400 space-y-1.5">
+              <p className="text-gray-300 font-medium">¿Prefieres escribir tú mismo el correo?</p>
+              <p>Envíalo a <span className="text-yellow-400">{FACTURA_EMAIL}</span> incluyendo:</p>
+              <ul className="list-disc list-inside space-y-0.5 pl-1">
+                <li>Nombre completo o razón social</li>
+                <li>Tipo y número de documento (CC, CE o NIT)</li>
+                <li>Correo donde quieres recibir la cuenta de cobro</li>
+                <li>Teléfono y ciudad</li>
+                <li>Dirección (opcional)</li>
+              </ul>
+            </div>
 
             <form onSubmit={handleSolicitarFactura} className="space-y-3">
               <div>
