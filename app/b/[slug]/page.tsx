@@ -41,6 +41,45 @@ interface Barbershop {
   reviews: Review[];
 }
 
+// ── Iconos de línea, minimalistas ────────────────────────────────
+function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+    </svg>
+  );
+}
+function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+      <circle cx="12" cy="12" r="9" strokeWidth={1.6} />
+    </svg>
+  );
+}
+function IconPin({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657 13.414 20.9a2 2 0 0 1-2.828 0l-4.243-4.243a8 8 0 1 1 11.314 0Z" />
+      <circle cx="12" cy="11" r="3" strokeWidth={1.6} />
+    </svg>
+  );
+}
+function IconPhone({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 0 1 2-2h3.28a1 1 0 0 1 .948.684l1.498 4.493a1 1 0 0 1-.502 1.21l-2.257 1.13a11.04 11.04 0 0 0 5.516 5.516l1.13-2.257a1 1 0 0 1 1.21-.502l4.493 1.498a1 1 0 0 1 .684.949V19a2 2 0 0 1-2 2h-1C9.716 21 3 14.284 3 6V5Z" />
+    </svg>
+  );
+}
+function StarIcon({ filled, color }: { filled: boolean; color: string }) {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 20 20" fill={filled ? color : 'none'} stroke={filled ? color : '#D1D5DB'} strokeWidth={1.2}>
+      <path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.2 1.3 6.1L10 14.9l-5.4 3.1 1.3-6.1L1.3 7.7l6.1-.6L10 1.5z" />
+    </svg>
+  );
+}
+
 export default function PublicBarbershopPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -102,50 +141,74 @@ export default function PublicBarbershopPage() {
 
   const primaryColor   = barbershop.colors[0] || '#111827';
   const secondaryColor = barbershop.colors[1] || '#F59E0B';
-  const heroStyle      = { backgroundColor: primaryColor };
   const aboutText      = barbershop.bio || barbershop.description;
+  const avgRating      = barbershop.reviews.length
+    ? barbershop.reviews.reduce((s, r) => s + r.rating, 0) / barbershop.reviews.length
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap');`}</style>
 
-      {/* ── Hero Section ─────────────────────────────────────── */}
-      <section className="relative" style={heroStyle}>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden" style={{ backgroundColor: primaryColor }}>
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{ background: `radial-gradient(ellipse 70% 60% at 50% 0%, ${secondaryColor}33, transparent 70%)` }}
+        />
+        <div className="relative max-w-5xl mx-auto px-6 sm:px-8 py-28 sm:py-40">
           <div className="text-center text-white">
 
-            {barbershop.logo && (
+            {barbershop.logo ? (
               <img
                 src={barbershop.logo}
                 alt={barbershop.name}
-                className="w-24 h-24 mx-auto mb-6 rounded-full border-4 border-white shadow-lg object-cover"
+                className="w-40 h-40 sm:w-52 sm:h-52 mx-auto mb-8 rounded-full object-cover ring-2 shadow-2xl"
+                style={{ boxShadow: `0 0 0 3px ${secondaryColor}55, 0 25px 70px rgba(0,0,0,0.4)` }}
               />
+            ) : (
+              <div
+                className="w-40 h-40 sm:w-52 sm:h-52 mx-auto mb-8 rounded-full flex items-center justify-center text-6xl sm:text-7xl font-bold ring-2 shadow-2xl"
+                style={{ fontFamily: "'Playfair Display', serif", background: 'rgba(255,255,255,0.08)', boxShadow: `0 0 0 3px ${secondaryColor}55, 0 25px 70px rgba(0,0,0,0.4)` }}
+              >
+                {barbershop.name.trim().charAt(0).toUpperCase()}
+              </div>
             )}
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
+            <h1
+              className="capitalize text-5xl sm:text-6xl lg:text-7xl font-bold mb-5 leading-[1.05] tracking-tight"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               {barbershop.name}
             </h1>
 
             {barbershop.description && (
-              <p className="text-xl sm:text-2xl mb-8 max-w-2xl mx-auto opacity-90">
+              <p className="text-lg sm:text-xl mb-10 max-w-xl mx-auto opacity-80 font-light leading-relaxed">
                 {barbershop.description}
               </p>
             )}
 
-            {/* ✅ Botón principal → flujo de reserva */}
+            {avgRating && (
+              <div className="flex items-center justify-center gap-1.5 mb-8 opacity-90">
+                {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < Math.round(avgRating)} color={secondaryColor} />)}
+                <span className="text-sm ml-1.5 opacity-80">{avgRating.toFixed(1)} · {barbershop.reviews.length} reseña{barbershop.reviews.length !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+
             <Link
               href={`/b/${barbershop.slug}/booking`}
-              className="inline-block px-8 py-4 rounded-full font-bold text-lg transition shadow-lg hover:opacity-90"
+              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-full font-semibold text-base transition shadow-xl hover:shadow-2xl hover:-translate-y-0.5"
               style={{ backgroundColor: secondaryColor, color: primaryColor }}
             >
-              🗓️ Reservar Cita
+              <IconCalendar className="w-5 h-5" />
+              Reservar cita
             </Link>
 
           </div>
         </div>
 
-        {/* Ola decorativa */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 sm:h-12">
+        <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-[0]">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-10 sm:h-14">
             <path d="M0,60 C300,0 900,0 1200,60 L1200,60 L0,60 Z" fill="#f9fafb" />
           </svg>
         </div>
@@ -153,28 +216,34 @@ export default function PublicBarbershopPage() {
 
       {/* ── Sobre Nosotros ───────────────────────────────────── */}
       {aboutText && (
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Sobre Nosotros</h2>
-            <div className="w-16 h-1 mx-auto mb-8 rounded-full" style={{ backgroundColor: primaryColor }} />
-            <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">{aboutText}</p>
+        <section className="py-20 sm:py-24 bg-gray-50">
+          <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Sobre nosotros
+            </h2>
+            <div className="w-12 h-px mx-auto mb-9" style={{ backgroundColor: secondaryColor }} />
+            <p className="text-lg text-gray-600 leading-loose whitespace-pre-wrap font-light">{aboutText}</p>
           </div>
         </section>
       )}
 
       {/* ── Galería ──────────────────────────────────────────── */}
       {barbershop.photos.length > 0 && (
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">📸 Nuestro Trabajo</h2>
-            <div className="w-16 h-1 mx-auto mb-8 rounded-full" style={{ backgroundColor: primaryColor }} />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <section className="py-20 sm:py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-6 sm:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Nuestro trabajo
+              </h2>
+              <div className="w-12 h-px mx-auto" style={{ backgroundColor: secondaryColor }} />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {barbershop.photos.map((photo, index) => (
-                <div key={index} className="aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition">
+                <div key={index} className="aspect-square rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300">
                   <img
                     src={photo}
                     alt={`Foto ${index + 1}`}
-                    className="w-full h-full object-cover hover:scale-110 transition duration-300"
+                    className="w-full h-full object-cover hover:scale-105 transition duration-500"
                   />
                 </div>
               ))}
@@ -184,32 +253,37 @@ export default function PublicBarbershopPage() {
       )}
 
       {/* ── Servicios ────────────────────────────────────────── */}
-      <section id="servicios" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">💈 Nuestros Servicios</h2>
-          <div className="w-16 h-1 mx-auto mb-8 rounded-full" style={{ backgroundColor: primaryColor }} />
+      <section id="servicios" className="py-20 sm:py-24 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Nuestros servicios
+            </h2>
+            <div className="w-12 h-px mx-auto" style={{ backgroundColor: secondaryColor }} />
+          </div>
           {barbershop.services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {barbershop.services.map((service) => (
                 <div
                   key={service.id}
-                  className="bg-white border-2 rounded-xl p-6 hover:shadow-lg transition"
-                  style={{ borderColor: primaryColor }}
+                  className="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col"
+                  style={{ borderTop: `3px solid ${primaryColor}` }}
                 >
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{service.name}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
                   {service.description && (
-                    <p className="text-gray-600 mb-4 text-sm">{service.description}</p>
+                    <p className="text-gray-500 mb-5 text-sm leading-relaxed flex-1">{service.description}</p>
                   )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold" style={{ color: primaryColor }}>
+                  <div className="flex justify-between items-center mb-5">
+                    <span className="text-2xl font-bold" style={{ color: primaryColor, fontFamily: "'Playfair Display', serif" }}>
                       {formatPrice(service.price)}
                     </span>
-                    <span className="text-gray-500 text-sm">⏱️ {service.duration} min</span>
+                    <span className="text-gray-400 text-sm flex items-center gap-1.5">
+                      <IconClock /> {service.duration} min
+                    </span>
                   </div>
-                  {/* ✅ Botón de cada servicio → flujo de reserva */}
                   <Link
                     href={`/b/${barbershop.slug}/booking`}
-                    className="mt-4 w-full py-2 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition block text-center"
+                    className="w-full py-3 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition text-center"
                     style={{ backgroundColor: primaryColor }}
                   >
                     Reservar
@@ -225,31 +299,33 @@ export default function PublicBarbershopPage() {
 
       {/* ── Reseñas ──────────────────────────────────────────── */}
       {barbershop.reviews.length > 0 && (
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">⭐ Reseñas de Clientes</h2>
-            <div className="w-16 h-1 mx-auto mb-8 rounded-full" style={{ backgroundColor: primaryColor }} />
+        <section className="py-20 sm:py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-6 sm:px-8">
+            <div className="text-center mb-14">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Lo que dicen nuestros clientes
+              </h2>
+              <div className="w-12 h-px mx-auto" style={{ backgroundColor: secondaryColor }} />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {barbershop.reviews.map((review) => (
-                <div key={review.id} className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                  <div className="flex items-center mb-4">
+                <div key={review.id} className="bg-gray-50 rounded-2xl p-7 shadow-sm">
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < review.rating} color={secondaryColor} />)}
+                  </div>
+                  {review.comment && (
+                    <p className="text-gray-600 text-[15px] leading-relaxed mb-5 italic">&ldquo;{review.comment}&rdquo;</p>
+                  )}
+                  <div className="flex items-center gap-3">
                     {review.client.image ? (
-                      <img src={review.client.image} alt={review.client.name || 'Cliente'} className="w-10 h-10 rounded-full mr-3 object-cover" />
+                      <img src={review.client.image} alt={review.client.name || 'Cliente'} className="w-9 h-9 rounded-full object-cover" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center text-gray-600 font-bold">
+                      <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold text-sm">
                         {(review.client.name || 'C')[0].toUpperCase()}
                       </div>
                     )}
-                    <div>
-                      <p className="font-semibold text-gray-900">{review.client.name || 'Cliente'}</p>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i} style={{ color: i < review.rating ? secondaryColor : '#D1D5DB' }}>★</span>
-                        ))}
-                      </div>
-                    </div>
+                    <p className="font-medium text-gray-800 text-sm">{review.client.name || 'Cliente'}</p>
                   </div>
-                  {review.comment && <p className="text-gray-700 text-sm">{review.comment}</p>}
                 </div>
               ))}
             </div>
@@ -258,49 +334,45 @@ export default function PublicBarbershopPage() {
       )}
 
       {/* ── Contacto ─────────────────────────────────────────── */}
-      <section className="py-16" style={{ backgroundColor: primaryColor }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h2 className="text-3xl font-bold mb-8">📍 Visítanos</h2>
-          <div className="space-y-4 mb-8">
-            <p className="text-lg flex items-center justify-center gap-2 opacity-90">
-              <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+      <section className="py-20 sm:py-24" style={{ backgroundColor: primaryColor }}>
+        <div className="max-w-2xl mx-auto px-6 sm:px-8 text-center text-white">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-12" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Visítanos
+          </h2>
+          <div className="space-y-5 mb-12">
+            <p className="text-lg flex items-center justify-center gap-3 opacity-85 font-light">
+              <IconPin />
               {barbershop.address}
             </p>
-            <p className="text-lg flex items-center justify-center gap-2 opacity-90">
-              <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
+            <p className="text-lg flex items-center justify-center gap-3 opacity-85 font-light">
+              <IconPhone />
               <a href={`tel:${barbershop.phone}`} className="hover:underline">{barbershop.phone}</a>
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {/* ✅ Botón de reserva en la sección de contacto */}
             <Link
               href={`/b/${barbershop.slug}/booking`}
-              className="inline-block px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition shadow-lg"
+              className="inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-full font-semibold text-base hover:shadow-2xl hover:-translate-y-0.5 transition shadow-xl"
               style={{ backgroundColor: secondaryColor, color: primaryColor }}
             >
-              🗓️ Reservar Cita
+              <IconCalendar className="w-5 h-5" /> Reservar cita
             </Link>
             <a
               href={`tel:${barbershop.phone}`}
-              className="inline-block px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition shadow-lg border-2 border-white text-white"
+              className="inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-full font-semibold text-base hover:bg-white/10 transition shadow-xl border border-white/30 text-white"
             >
-              📞 Llamar Ahora
+              <IconPhone className="w-5 h-5" /> Llamar ahora
             </a>
           </div>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">© 2024 {barbershop.name}. Todos los derechos reservados.</p>
-          <p className="text-gray-500 text-sm mt-2">🔗 Powered by Barber Booking</p>
+      <footer className="bg-gray-950 text-white py-10">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center">
+          <p className="text-gray-400 text-sm">© {new Date().getFullYear()} {barbershop.name}. Todos los derechos reservados.</p>
+          <p className="text-gray-600 text-xs mt-2">Creado con BarberBooking</p>
         </div>
       </footer>
     </div>
