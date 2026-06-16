@@ -439,8 +439,7 @@ export default function HomePage() {
 
         <div className="footer-bottom">
           <p className="footer-legal">
-            © {new Date().getFullYear()} BarberBooking. Todos los derechos reservados.<br />
-            BarberBooking es operado por Jose Felipe Amaya Castro · C.C. 1.000.518.235 · Bogotá, Colombia
+            © {new Date().getFullYear()} BarberBooking. Todos los derechos reservados.
           </p>
           <div className="footer-trust">
             🔒 Pagos procesados de forma segura por <strong style={{ color: 'rgba(245,240,232,0.5)' }}>Wompi</strong>
