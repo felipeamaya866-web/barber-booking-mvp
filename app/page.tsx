@@ -147,11 +147,33 @@ export default function HomePage() {
         .cta-title { font-size: clamp(32px, 4vw, 52px); font-weight: 900; letter-spacing: -1.5px; margin-bottom: 16px; line-height: 1.1; }
         .cta-sub { font-size: 16px; color: rgba(245,240,232,0.5); margin-bottom: 40px; line-height: 1.6; }
 
-        footer { border-top: 1px solid var(--gray-3); padding: 40px 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-        footer p { font-size: 13px; color: rgba(245,240,232,0.3); }
-        .footer-links { display: flex; gap: 24px; list-style: none; }
-        .footer-links a { font-size: 13px; color: rgba(245,240,232,0.3); text-decoration: none; transition: color 0.2s; }
+        .plans-section { background: var(--gray-1); border-top: 1px solid var(--gray-3); border-bottom: 1px solid var(--gray-3); }
+        .plans-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 56px; }
+        .plan-card { background: var(--black); border: 1px solid var(--gray-3); border-radius: 20px; padding: 40px 32px; position: relative; display: flex; flex-direction: column; transition: border-color 0.3s, transform 0.3s; }
+        .plan-card:hover { transform: translateY(-4px); border-color: rgba(201,168,76,0.35); }
+        .plan-card.featured { border-color: var(--gold); box-shadow: 0 8px 40px rgba(201,168,76,0.12); }
+        .plan-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--black); font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 999px; white-space: nowrap; }
+        .plan-tagline { font-size: 13px; color: var(--gold); margin-bottom: 12px; }
+        .plan-name { font-size: 24px; font-weight: 700; color: var(--white); margin-bottom: 8px; font-family: 'Playfair Display', serif; }
+        .plan-price { font-size: 36px; font-weight: 900; color: var(--white); margin-bottom: 4px; }
+        .plan-price span { font-size: 14px; font-weight: 400; color: rgba(245,240,232,0.4); }
+        .plan-perks { list-style: none; margin: 24px 0 28px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .plan-perks li { font-size: 14px; color: rgba(245,240,232,0.65); display: flex; gap: 8px; align-items: flex-start; }
+        .plan-perks li::before { content: '✓'; color: var(--gold); flex-shrink: 0; font-weight: 700; }
+        .plan-cta { text-align: center; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; transition: all 0.2s; }
+        .plan-cta.primary { background: linear-gradient(135deg, var(--gold-lt), var(--gold-dk)); color: var(--black); }
+        .plan-cta.secondary { background: transparent; border: 1px solid rgba(245,240,232,0.15); color: var(--white); }
+        .plan-cta.secondary:hover { border-color: rgba(201,168,76,0.4); }
+        .plans-trust { text-align: center; margin-top: 48px; font-size: 13px; color: rgba(245,240,232,0.4); }
+
+        footer { border-top: 1px solid var(--gray-3); padding: 48px 48px 32px; display: flex; flex-direction: column; gap: 28px; }
+        .footer-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
+        .footer-links { display: flex; gap: 22px; list-style: none; flex-wrap: wrap; }
+        .footer-links a { font-size: 13px; color: rgba(245,240,232,0.45); text-decoration: none; transition: color 0.2s; }
         .footer-links a:hover { color: var(--gold); }
+        .footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--gray-3); padding-top: 20px; }
+        .footer-legal { font-size: 12px; color: rgba(245,240,232,0.3); line-height: 1.6; }
+        .footer-trust { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(245,240,232,0.35); }
 
         .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
         .reveal.visible { opacity: 1; transform: none; }
@@ -170,7 +192,10 @@ export default function HomePage() {
           .steps { grid-template-columns: repeat(2, 1fr); gap: 40px; }
           .steps::before { display: none; }
           .cta-box { padding: 48px 28px; }
-          footer { flex-direction: column; text-align: center; padding: 32px 20px; }
+          .plans-grid { grid-template-columns: 1fr; }
+          footer { padding: 32px 20px; }
+          .footer-top { flex-direction: column; }
+          .footer-bottom { flex-direction: column; text-align: center; }
         }
       `}</style>
 
@@ -183,6 +208,7 @@ export default function HomePage() {
         <ul className="nav-links">
           <li><a href="#como-funciona">Cómo funciona</a></li>
           <li><a href="#caracteristicas">Características</a></li>
+          <li><a href="#planes">Planes</a></li>
           <li><a href="#para-ti">Para ti</a></li>
           <li><a href="/login" className="nav-cta">Iniciar sesión</a></li>
         </ul>
@@ -309,6 +335,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* PLANES */}
+      <section id="planes" className="plans-section" style={{ maxWidth: '100%' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <span className="section-tag reveal" style={{ textAlign: 'center', display: 'block' }}>Planes flexibles</span>
+          <h2 className="section-title reveal" style={{ textAlign: 'center', maxWidth: '100%' }}>
+            Un plan que crece<br />con tu barbería
+          </h2>
+          <p className="section-sub reveal" style={{ textAlign: 'center', margin: '0 auto' }}>
+            Empieza gratis 14 días, sin que se haga ningún cobro. Cancela cuando quieras, sin contratos ni letra pequeña.
+          </p>
+
+          <div className="plans-grid">
+            <div className="plan-card reveal">
+              <span className="plan-tagline">Para empezar con todo</span>
+              <h3 className="plan-name">Lite</h3>
+              <div className="plan-price">$29.900<span>/mes</span></div>
+              <ul className="plan-perks">
+                <li>1 barbero</li>
+                <li>10 fotos en galería</li>
+                <li>Agenda y reservas 24/7</li>
+                <li>Página pública personalizable</li>
+                <li>Soporte por WhatsApp</li>
+              </ul>
+              <a href="/login" className="plan-cta secondary">Empezar gratis →</a>
+            </div>
+
+            <div className="plan-card featured reveal reveal-delay-1">
+              <span className="plan-badge">⭐ Más elegido</span>
+              <span className="plan-tagline">Para barberías en crecimiento</span>
+              <h3 className="plan-name">Prime</h3>
+              <div className="plan-price">$49.900<span>/mes</span></div>
+              <ul className="plan-perks">
+                <li>2 a 3 barberos</li>
+                <li>20 fotos en galería</li>
+                <li>Todo lo de Lite</li>
+                <li>Estadísticas de tu negocio</li>
+                <li>Gestión de equipo y horarios</li>
+              </ul>
+              <a href="/login" className="plan-cta primary">Empezar gratis →</a>
+            </div>
+
+            <div className="plan-card reveal reveal-delay-2">
+              <span className="plan-tagline">Para equipos grandes</span>
+              <h3 className="plan-name">Elite</h3>
+              <div className="plan-price">$79.900<span>/mes</span></div>
+              <ul className="plan-perks">
+                <li>Barberos ilimitados</li>
+                <li>40 fotos en galería</li>
+                <li>Todo lo de Prime</li>
+                <li>Ideal para varias sedes o franquicias</li>
+                <li>Soporte prioritario</li>
+              </ul>
+              <a href="/login" className="plan-cta secondary">Empezar gratis →</a>
+            </div>
+          </div>
+
+          <p className="plans-trust reveal">
+            🔒 Pagos procesados de forma segura por <strong style={{ color: 'var(--white)' }}>Wompi</strong>
+            {' '}· Nunca almacenamos los datos de tu tarjeta · 14 días gratis, cancela cuando quieras
+          </p>
+        </div>
+      </section>
+
       {/* CTA FINAL */}
       <div className="cta-section">
         <div className="cta-bg" />
@@ -321,18 +410,41 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className="logo-icon" style={{ width: 32, height: 32, fontSize: 14 }}>✂️</div>
-          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: 'var(--white)' }}>
-            Barber<span style={{ color: 'var(--gold)' }}>Booking</span>
-          </span>
+        <div className="footer-top">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div className="logo-icon" style={{ width: 32, height: 32, fontSize: 14 }}>✂️</div>
+              <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: 'var(--white)' }}>
+                Barber<span style={{ color: 'var(--gold)' }}>Booking</span>
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(245,240,232,0.4)', maxWidth: 280, lineHeight: 1.6, marginBottom: 16 }}>
+              La plataforma para gestionar tu barbería y recibir reservas online, sin complicaciones.
+            </p>
+            <a href="/login" className="btn-secondary" style={{ padding: '10px 22px', fontSize: 13 }}>
+              Crear mi barbería →
+            </a>
+          </div>
+
+          <ul className="footer-links">
+            <li><a href="#planes">Planes y precios</a></li>
+            <li><a href="/terminos">Términos</a></li>
+            <li><a href="/privacidad">Privacidad</a></li>
+            <li><a href="/cookies">Cookies</a></li>
+            <li><a href="/contacto">Contacto</a></li>
+            <li><a href="/login">Iniciar sesión</a></li>
+          </ul>
         </div>
-        <p>© 2025 BarberBooking. Todos los derechos reservados.</p>
-        <ul className="footer-links">
-          <li><a href="/terminos">Términos</a></li>
-          <li><a href="/privacidad">Privacidad</a></li>
-          <li><a href="/contacto">Contacto</a></li>
-        </ul>
+
+        <div className="footer-bottom">
+          <p className="footer-legal">
+            © {new Date().getFullYear()} BarberBooking. Todos los derechos reservados.<br />
+            BarberBooking es operado por Jose Felipe Amaya Castro · C.C. 1.000.518.235 · Bogotá, Colombia
+          </p>
+          <div className="footer-trust">
+            🔒 Pagos procesados de forma segura por <strong style={{ color: 'rgba(245,240,232,0.5)' }}>Wompi</strong>
+          </div>
+        </div>
       </footer>
     </>
   );

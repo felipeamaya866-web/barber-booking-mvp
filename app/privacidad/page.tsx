@@ -266,23 +266,10 @@ export default function PrivacidadPage() {
 
             <h2>14. Cookies y tecnologías similares</h2>
             <p>
-              Actualmente, la Plataforma utiliza únicamente las siguientes cookies y tecnologías de almacenamiento local,
-              estrictamente necesarias para su funcionamiento:
-            </p>
-            <table>
-              <thead>
-                <tr><th>Cookie / tecnología</th><th>Propósito</th><th>Duración</th></tr>
-              </thead>
-              <tbody>
-                <tr><td><code>next-auth.session-token</code></td><td>Mantener la sesión autenticada del Usuario</td><td>Hasta cierre de sesión o expiración (sesión)</td></tr>
-                <tr><td><code>next-auth.csrf-token</code></td><td>Protección contra ataques de falsificación de solicitudes (CSRF)</td><td>Sesión</td></tr>
-              </tbody>
-            </table>
-            <p>
-              No utilizamos cookies de seguimiento publicitario de terceros. Si en el futuro incorporamos herramientas de
-              analítica (por ejemplo, Google Analytics o Vercel Analytics) u otras tecnologías que impliquen el uso de cookies
-              o identificadores adicionales, esta sección será actualizada para listarlas expresamente antes de su activación,
-              indicando su propósito y duración específicos.
+              La Plataforma utiliza únicamente cookies estrictamente necesarias para su funcionamiento (autenticación y
+              sesión). El detalle completo de cada cookie, su proveedor, propósito y duración se encuentra en nuestra{' '}
+              <Link href="/cookies">Política de Cookies</Link>, documento independiente que se actualizará antes de
+              incorporar cualquier herramienta adicional (por ejemplo, analítica) que use cookies o identificadores nuevos.
             </p>
 
             <h2>15. Cambios a esta política</h2>
