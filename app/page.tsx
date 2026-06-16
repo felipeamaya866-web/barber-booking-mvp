@@ -5,6 +5,33 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
+type IconName = 'briefcase' | 'scissors' | 'calendar' | 'users' | 'globe' | 'chart' | 'lock' | 'mobile';
+
+const ICON_PATHS: Record<IconName, React.ReactNode> = {
+  briefcase: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" />,
+  scissors: (
+    <>
+      <circle cx="6" cy="6.5" r="2.4" />
+      <circle cx="6" cy="17.5" r="2.4" />
+      <path strokeLinecap="round" d="M8.3 8 19.5 19.5M8.3 16 19.5 4.5" />
+    </>
+  ),
+  calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />,
+  users: <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />,
+  globe: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c1.657 0 3-4.03 3-9s-1.343-9-3-9-3 4.03-3 9 1.343 9 3 9Zm-9-9h18" />,
+  chart: <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />,
+  lock: <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />,
+  mobile: <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3M9 18h6" />,
+};
+
+function Icon({ name, size = 28 }: { name: IconName; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
+
 export default function HomePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -120,7 +147,7 @@ export default function HomePage() {
         .path-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left, rgba(201,168,76,0.08), transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .path-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-4px); }
         .path-card:hover::before { opacity: 1; }
-        .path-icon { width: 64px; height: 64px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 28px; }
+        .path-icon { width: 64px; height: 64px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--gold); margin-bottom: 28px; }
         .path-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; color: var(--white); }
         .path-desc { font-size: 15px; color: rgba(245,240,232,0.5); line-height: 1.6; margin-bottom: 32px; }
         .path-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
@@ -131,7 +158,7 @@ export default function HomePage() {
         .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 64px; background: var(--gray-3); border-radius: 20px; overflow: hidden; }
         .feature { background: var(--gray-1); padding: 40px 36px; transition: background 0.2s; }
         .feature:hover { background: var(--gray-2); }
-        .feature-icon { font-size: 32px; margin-bottom: 20px; display: block; }
+        .feature-icon { width: 48px; height: 48px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--gold); margin-bottom: 20px; }
         .feature-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: var(--white); font-family: 'Playfair Display', serif; }
         .feature-desc { font-size: 14px; color: rgba(245,240,232,0.45); line-height: 1.6; }
 
@@ -257,7 +284,7 @@ export default function HomePage() {
         <p className="section-sub reveal">Tanto si eres dueño de una barbería como si buscas el mejor corte, BarberBooking tiene lo que necesitas.</p>
         <div className="paths">
           <a href="/login" className="path-card reveal">
-            <div className="path-icon">💼</div>
+            <div className="path-icon"><Icon name="briefcase" size={30} /></div>
             <h3 className="path-title">Soy dueño de barbería</h3>
             <p className="path-desc">Administra tu negocio, gestiona tu equipo y recibe reservas desde cualquier lugar.</p>
             <ul className="path-features">
@@ -270,7 +297,7 @@ export default function HomePage() {
             <span className="path-cta">Crear mi barbería →</span>
           </a>
           <div className="path-card reveal reveal-delay-1" style={{ cursor: 'default' }}>
-            <div className="path-icon">✂️</div>
+            <div className="path-icon"><Icon name="scissors" size={30} /></div>
             <h3 className="path-title">Busco una barbería</h3>
             <p className="path-desc">Encuentra las mejores barberías cerca de ti y reserva en segundos.</p>
             <ul className="path-features">
@@ -297,16 +324,16 @@ export default function HomePage() {
         <span className="section-tag reveal">Plataforma completa</span>
         <h2 className="section-title reveal">Todo lo que tu barbería<br />necesita para crecer</h2>
         <div className="features-grid reveal">
-          {[
-            { icon: '📅', title: 'Agenda inteligente',  desc: 'Vista semanal con todas las citas, filtros por barbero y gestión de estados en tiempo real.' },
-            { icon: '✂️', title: 'Gestión de equipo',   desc: 'Agrega barberos, configura sus horarios, descansos y controla su acceso al sistema.' },
-            { icon: '🌐', title: 'Página pública',       desc: 'Cada barbería tiene su propia landing page personalizable con colores, fotos y servicios.' },
-            { icon: '📊', title: 'Estadísticas',         desc: 'Ingresos, citas por mes, servicios más vendidos y tasa de cancelaciones en un solo lugar.' },
-            { icon: '🔒', title: 'Roles y permisos',     desc: 'El dueño controla qué puede ver cada barbero. Privacidad total de los datos del negocio.' },
-            { icon: '📱', title: 'Reservas 24/7',        desc: 'Los clientes reservan desde cualquier dispositivo, sin llamadas ni mensajes de WhatsApp.' },
-          ].map((f, i) => (
+          {([
+            { icon: 'calendar', title: 'Agenda inteligente',  desc: 'Vista semanal con todas las citas, filtros por barbero y gestión de estados en tiempo real.' },
+            { icon: 'users',    title: 'Gestión de equipo',   desc: 'Agrega barberos, configura sus horarios, descansos y controla su acceso al sistema.' },
+            { icon: 'globe',    title: 'Página pública',       desc: 'Cada barbería tiene su propia landing page personalizable con colores, fotos y servicios.' },
+            { icon: 'chart',    title: 'Estadísticas',         desc: 'Ingresos, citas por mes, servicios más vendidos y tasa de cancelaciones en un solo lugar.' },
+            { icon: 'lock',     title: 'Roles y permisos',     desc: 'El dueño controla qué puede ver cada barbero. Privacidad total de los datos del negocio.' },
+            { icon: 'mobile',   title: 'Reservas 24/7',        desc: 'Los clientes reservan desde cualquier dispositivo, sin llamadas ni mensajes de WhatsApp.' },
+          ] as { icon: IconName; title: string; desc: string }[]).map((f, i) => (
             <div key={f.title} className={`feature reveal reveal-delay-${(i % 3) + 1}`}>
-              <span className="feature-icon">{f.icon}</span>
+              <span className="feature-icon"><Icon name={f.icon} size={26} /></span>
               <h3 className="feature-title">{f.title}</h3>
               <p className="feature-desc">{f.desc}</p>
             </div>
