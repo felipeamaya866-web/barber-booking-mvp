@@ -26,6 +26,22 @@ interface AcceptanceTokens {
   personalDataUrl:    string;
 }
 
+interface InvoiceForm {
+  nombre:    string;
+  tipoDoc:   string;
+  numeroDoc: string;
+  correo:    string;
+  telefono:  string;
+  direccion: string;
+  ciudad:    string;
+}
+
+const INVOICE_EMPTY: InvoiceForm = {
+  nombre: '', tipoDoc: 'CC', numeroDoc: '', correo: '', telefono: '', direccion: '', ciudad: '',
+};
+
+const FACTURA_EMAIL = 'barber.boking@gmail.com';
+
 interface CardForm {
   number:             string;
   expMonth:           string;
@@ -93,6 +109,9 @@ export default function PlansPage() {
   const [successMsg, setSuccessMsg]     = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelando, setCancelando]     = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceForm, setInvoiceForm]   = useState<InvoiceForm>(INVOICE_EMPTY);
+  const [invoiceError, setInvoiceError] = useState('');
 
   useEffect(() => { fetchSubscription(); }, []);
 
@@ -136,6 +155,35 @@ export default function PlansPage() {
     } finally {
       setCancelando(false);
     }
+  }
+
+  // ── Solicitar cuenta de cobro (no facturamos electrónicamente, persona natural) ──
+  function handleSolicitarFactura(e: React.FormEvent) {
+    e.preventDefault();
+    if (invoiceForm.nombre.trim().length < 3) { setInvoiceError('Ingresa tu nombre completo o razón social'); return; }
+    if (!invoiceForm.numeroDoc.trim()) { setInvoiceError('Ingresa tu número de documento'); return; }
+    if (!invoiceForm.correo.trim()) { setInvoiceError('Ingresa el correo donde quieres recibir la cuenta de cobro'); return; }
+    setInvoiceError('');
+
+    const planActual = PLANES.find(p => p.key === subscription?.plan);
+    const concepto = `Suscripción BarberBooking - Plan ${planActual?.nombre ?? subscription?.plan} - ${new Date().toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}`;
+    const valor = formatPrecio(planActual?.precio ?? 0);
+
+    const subject = encodeURIComponent(`Solicitud de cuenta de cobro - ${invoiceForm.nombre}`);
+    const body = encodeURIComponent(
+      `Solicito la generación de una cuenta de cobro con los siguientes datos:\n\n` +
+      `Nombre o razón social: ${invoiceForm.nombre}\n` +
+      `Tipo de documento: ${invoiceForm.tipoDoc}\n` +
+      `Número de documento: ${invoiceForm.numeroDoc}\n` +
+      `Correo para recibir la cuenta de cobro: ${invoiceForm.correo}\n` +
+      `Teléfono: ${invoiceForm.telefono || '-'}\n` +
+      `Dirección: ${invoiceForm.direccion || '-'}\n` +
+      `Ciudad: ${invoiceForm.ciudad || '-'}\n\n` +
+      `Concepto: ${concepto}\n` +
+      `Valor: ${valor}`
+    );
+
+    window.location.href = `mailto:${FACTURA_EMAIL}?subject=${subject}&body=${body}`;
   }
 
   // ── Al elegir un plan → cargar tokens y mostrar formulario ─────────────────
@@ -505,6 +553,12 @@ export default function PlansPage() {
                   ⏳ Período de prueba activo
                 </span>
               )}
+              {(subscription.status === 'ACTIVE' || subscription.status === 'TRIAL') && (
+                <button onClick={() => { setInvoiceForm(INVOICE_EMPTY); setInvoiceError(''); setShowInvoiceModal(true); }}
+                  className="text-xs bg-gray-800 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full hover:border-yellow-400/40 hover:text-white transition">
+                  📄 Solicitar cuenta de cobro
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -648,6 +702,87 @@ export default function PlansPage() {
                 }
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal solicitar cuenta de cobro ── */}
+      {showInvoiceModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4 overflow-y-auto py-8">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-bold text-white">📄 Solicitar cuenta de cobro</h2>
+              <button onClick={() => setShowInvoiceModal(false)} className="text-gray-400 hover:text-white text-xl">×</button>
+            </div>
+            <p className="text-gray-500 text-xs mb-5">
+              No emitimos factura electrónica (persona natural). Con estos datos te generamos una cuenta de cobro y te la enviamos por correo.
+            </p>
+
+            <form onSubmit={handleSolicitarFactura} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Nombre completo o razón social</label>
+                <input value={invoiceForm.nombre} onChange={e => setInvoiceForm(p => ({ ...p, nombre: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                  placeholder="Ej: Juan Pérez o Barbería S.A.S" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Tipo</label>
+                  <select value={invoiceForm.tipoDoc} onChange={e => setInvoiceForm(p => ({ ...p, tipoDoc: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none">
+                    <option value="CC">CC</option>
+                    <option value="CE">CE</option>
+                    <option value="NIT">NIT</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Número de documento</label>
+                  <input value={invoiceForm.numeroDoc} onChange={e => setInvoiceForm(p => ({ ...p, numeroDoc: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                    placeholder="1.000.000.000" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Correo para recibir la cuenta de cobro</label>
+                <input type="email" value={invoiceForm.correo} onChange={e => setInvoiceForm(p => ({ ...p, correo: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                  placeholder="tu@correo.com" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Teléfono</label>
+                  <input value={invoiceForm.telefono} onChange={e => setInvoiceForm(p => ({ ...p, telefono: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                    placeholder="300 000 0000" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Ciudad</label>
+                  <input value={invoiceForm.ciudad} onChange={e => setInvoiceForm(p => ({ ...p, ciudad: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                    placeholder="Bogotá" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Dirección (opcional)</label>
+                <input value={invoiceForm.direccion} onChange={e => setInvoiceForm(p => ({ ...p, direccion: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-yellow-400 focus:outline-none"
+                  placeholder="Calle 00 # 00-00" />
+              </div>
+
+              {invoiceError && <p className="text-red-400 text-xs">❌ {invoiceError}</p>}
+
+              <button type="submit"
+                className="w-full bg-yellow-400 text-gray-900 py-3 rounded-xl text-sm font-bold hover:bg-yellow-300 transition mt-2">
+                Enviar solicitud →
+              </button>
+              <p className="text-center text-xs text-gray-600">
+                Se abrirá tu aplicación de correo para enviar la solicitud a {FACTURA_EMAIL}
+              </p>
+            </form>
           </div>
         </div>
       )}
