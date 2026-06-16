@@ -235,12 +235,28 @@ export default function TerminosPage() {
               al Usuario por correo electrónico o mediante avisos dentro de la Plataforma.
             </p>
 
-            <h2>14. Terminación</h2>
+            <h2>14. Terminación y derecho de admisión</h2>
             <p>
               BarberBooking podrá suspender o terminar el acceso de un Usuario a la Plataforma, sin previo aviso, en caso de
               incumplimiento de estos Términos, uso fraudulento, impago reiterado o cualquier conducta que ponga en riesgo la
-              seguridad o el correcto funcionamiento del Servicio. El Usuario podrá terminar su relación con BarberBooking en
-              cualquier momento cancelando su suscripción conforme a la sección 6.
+              seguridad o el correcto funcionamiento del Servicio.
+            </p>
+            <p>
+              Adicionalmente, BarberBooking se reserva el <strong>derecho de admisión, permanencia y exclusión</strong> respecto
+              de cualquier Usuario, Dueño de Barbería o Cliente, pudiendo <strong>negar, restringir, suspender o cancelar el
+              acceso a la Plataforma a su entera discreción, en cualquier momento y sin obligación de expresar una causa
+              específica</strong>, cuando lo considere razonablemente necesario para proteger la seguridad, reputación,
+              operación o intereses legítimos de la Plataforma, de otros Usuarios o de terceros. Este derecho de admisión se
+              ejerce de forma excepcional y no será utilizado de manera arbitraria, discriminatoria ni contraria a la ley.
+            </p>
+            <p>
+              En caso de terminación o exclusión de un Dueño de Barbería conforme a esta sección, aplicará lo dispuesto en la
+              sección 6.3 sobre política de reembolsos, sin que ello genere derecho a indemnización adicional alguna a favor del
+              Usuario excluido.
+            </p>
+            <p>
+              El Usuario podrá terminar su relación con BarberBooking en cualquier momento cancelando su suscripción conforme a
+              la sección 6.
             </p>
 
             <h2>15. Ley aplicable y jurisdicción</h2>

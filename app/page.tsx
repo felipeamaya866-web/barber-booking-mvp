@@ -330,7 +330,7 @@ export default function HomePage() {
         <p>© 2025 BarberBooking. Todos los derechos reservados.</p>
         <ul className="footer-links">
           <li><a href="/terminos">Términos</a></li>
-          <li><a href="#">Privacidad</a></li>
+          <li><a href="/privacidad">Privacidad</a></li>
           <li><a href="/contacto">Contacto</a></li>
         </ul>
       </footer>
