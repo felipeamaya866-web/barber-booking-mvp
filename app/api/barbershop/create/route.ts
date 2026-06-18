@@ -83,21 +83,36 @@ export async function POST(request: Request) {
       slugCounter++;
     }
 
-    // Crear la barbería
-    const barbershop = await prisma.barbershop.create({
-      data: {
-        name,
-        address,
-        phone,
-        description: description && description.trim() !== '' ? description : null,
-        slug,
-        colors: [],
-        photos: [],
-        theme: 'MODERN',
-        owner: {
-          connect: { id: user.id },
+    // Crear la barbería y al dueño como primer barbero en una transacción
+    const barbershop = await prisma.$transaction(async (tx) => {
+      const bs = await tx.barbershop.create({
+        data: {
+          name,
+          address,
+          phone,
+          description: description && description.trim() !== '' ? description : null,
+          slug,
+          colors: [],
+          photos: [],
+          theme: 'MODERN',
+          owner: { connect: { id: user.id } },
         },
-      },
+      });
+
+      // Crear al dueño como primer barbero con acceso completo
+      await tx.barber.create({
+        data: {
+          name:         user.name || name,
+          email:        user.email,
+          barbershopId: bs.id,
+          userId:       user.id,
+          inviteStatus: 'ACCEPTED',
+          isActive:     true,
+          showEarnings: true,
+        },
+      });
+
+      return bs;
     });
 
     console.log('✅ Barbería creada:', barbershop.slug);
