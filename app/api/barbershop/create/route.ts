@@ -99,18 +99,27 @@ export async function POST(request: Request) {
         },
       });
 
-      // Crear al dueño como primer barbero con acceso completo
-      await tx.barber.create({
-        data: {
-          name:         user.name || name,
-          email:        user.email,
-          barbershopId: bs.id,
-          userId:       user.id,
-          inviteStatus: 'ACCEPTED',
-          isActive:     true,
-          showEarnings: true,
-        },
-      });
+      // Crear al dueño como primer barbero (solo si no tiene ya un perfil de barbero)
+      const existingBarber = await tx.barber.findUnique({ where: { userId: user.id } });
+      if (!existingBarber) {
+        await tx.barber.create({
+          data: {
+            name:         user.name || name,
+            email:        user.email,
+            barbershopId: bs.id,
+            userId:       user.id,
+            inviteStatus: 'ACCEPTED',
+            isActive:     true,
+            showEarnings: true,
+          },
+        });
+      } else {
+        // Si ya tiene perfil, reasignarlo a esta barbería
+        await tx.barber.update({
+          where: { userId: user.id },
+          data:  { barbershopId: bs.id, isActive: true, inviteStatus: 'ACCEPTED' },
+        });
+      }
 
       return bs;
     });
