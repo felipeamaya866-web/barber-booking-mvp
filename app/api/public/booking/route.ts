@@ -63,20 +63,30 @@ export async function POST(req: NextRequest) {
 
     const fechaCita = new Date(datetime);
 
-    // Verificar disponibilidad — que no haya conflicto con otra cita
+    // Verificar disponibilidad — detección correcta de solapamiento
     const inicioCita = fechaCita.getTime();
     const finCita    = inicioCita + service.duration * 60 * 1000;
 
-    const conflicto = await prisma.appointment.findFirst({
+    // Traer citas del barbero en esa barbería que puedan solapar (ventana de 4h)
+    const posiblesConflictos = await prisma.appointment.findMany({
       where: {
         barberId,
+        barbershopId: barbershop.id,
         status: { in: ['CONFIRMED', 'PENDING'] },
         date: {
-          gte: new Date(inicioCita - service.duration * 60 * 1000),
-          lte: new Date(finCita),
+          gte: new Date(inicioCita - 4 * 60 * 60 * 1000),
+          lt:  new Date(finCita),
         },
       },
       include: { service: { select: { duration: true } } },
+    });
+
+    // Solapamiento real: cita existente empieza antes de que termine la nueva
+    // Y cita existente termina después de que empieza la nueva
+    const conflicto = posiblesConflictos.find(apt => {
+      const existingStart = apt.date.getTime();
+      const existingEnd   = existingStart + apt.service.duration * 60 * 1000;
+      return existingStart < finCita && existingEnd > inicioCita;
     });
 
     if (conflicto) {

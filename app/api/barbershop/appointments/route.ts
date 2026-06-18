@@ -85,6 +85,36 @@ export async function POST(req: NextRequest) {
     if (!service) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
     if (!barber)  return NextResponse.json({ error: 'Barbero no encontrado' },  { status: 404 });
 
+    // Verificar solapamiento de citas
+    const inicioCita = new Date(datetime).getTime();
+    const finCita    = inicioCita + service.duration * 60 * 1000;
+
+    const posiblesConflictos = await prisma.appointment.findMany({
+      where: {
+        barberId,
+        barbershopId: barbershop.id,
+        status: { in: ['CONFIRMED', 'PENDING'] },
+        date: {
+          gte: new Date(inicioCita - 4 * 60 * 60 * 1000),
+          lt:  new Date(finCita),
+        },
+      },
+      include: { service: { select: { duration: true } } },
+    });
+
+    const conflicto = posiblesConflictos.find(apt => {
+      const existingStart = apt.date.getTime();
+      const existingEnd   = existingStart + apt.service.duration * 60 * 1000;
+      return existingStart < finCita && existingEnd > inicioCita;
+    });
+
+    if (conflicto) {
+      return NextResponse.json(
+        { error: 'Ese barbero ya tiene una cita en ese horario. Por favor elige otro.' },
+        { status: 409 }
+      );
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         date:         new Date(datetime),
