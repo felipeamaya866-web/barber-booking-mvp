@@ -108,7 +108,7 @@ export async function POST(request: Request) {
             email:        user.email,
             barbershopId: bs.id,
             userId:       user.id,
-            inviteStatus: 'ACCEPTED',
+            inviteStatus: 'APPROVED',
             isActive:     true,
             showEarnings: true,
           },
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
         // Si ya tiene perfil, reasignarlo a esta barbería
         await tx.barber.update({
           where: { userId: user.id },
-          data:  { barbershopId: bs.id, isActive: true, inviteStatus: 'ACCEPTED' },
+          data:  { barbershopId: bs.id, isActive: true, inviteStatus: 'APPROVED' },
         });
       }
 
