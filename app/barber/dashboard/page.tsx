@@ -105,6 +105,7 @@ export default function BarberDashboard() {
   const [selectedDay, setSelectedDay]   = useState(toLocalDateStr(new Date()));
   const [loadingAgenda, setLoadingAgenda] = useState(false);
   const [detailApt, setDetailApt]       = useState<Appointment | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const weekDays = getWeekDays(monday);
   const todayStr = toLocalDateStr(new Date());
@@ -161,6 +162,22 @@ export default function BarberDashboard() {
   }, [tab, fetchAgenda]);
 
   const citasDia = (ds: string) => appointments.filter(a => a.date.startsWith(ds));
+
+  async function updateAppointmentStatus(id: string, status: string) {
+    setUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/barber/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+        setDetailApt(prev => prev?.id === id ? { ...prev, status } : prev);
+      }
+    } catch { /* silencioso */ }
+    finally { setUpdatingStatus(false); }
+  }
 
   // ─────────────────────────────────────────────
   // ESTADOS DE CARGA / ERROR
@@ -456,7 +473,23 @@ export default function BarberDashboard() {
                 </div>
               ))}
             </div>
-            <div className="p-5 pt-0">
+            <div className="p-5 pt-0 space-y-2">
+              {detailApt.status !== 'COMPLETED' && detailApt.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => updateAppointmentStatus(detailApt.id, 'COMPLETED')}
+                  disabled={updatingStatus}
+                  className="w-full bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-3 rounded-xl text-sm font-medium transition">
+                  {updatingStatus ? 'Actualizando...' : '✅ Marcar como completada'}
+                </button>
+              )}
+              {detailApt.status !== 'CANCELLED' && detailApt.status !== 'COMPLETED' && (
+                <button
+                  onClick={() => updateAppointmentStatus(detailApt.id, 'CANCELLED')}
+                  disabled={updatingStatus}
+                  className="w-full bg-red-900/50 hover:bg-red-800 disabled:opacity-50 text-red-300 py-3 rounded-xl text-sm font-medium transition">
+                  {updatingStatus ? 'Actualizando...' : '✗ Cancelar cita'}
+                </button>
+              )}
               <button onClick={() => setDetailApt(null)} className="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium hover:bg-gray-600 transition">Cerrar</button>
             </div>
           </div>
