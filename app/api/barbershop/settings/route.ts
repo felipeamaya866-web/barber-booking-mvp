@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkAndExpire, isActive } from '@/lib/subscription';
+import { geocodeAddress } from '@/lib/geocode';
 
 // ─────────────────────────────────────────────────────────────────
 // HELPERS: mapear entre colors[] del schema ↔ primaryColor/secondaryColor de la UI
@@ -136,7 +137,14 @@ export async function PUT(req: NextRequest) {
     if (name !== undefined)        dataToUpdate.name        = name.trim();
     if (description !== undefined) dataToUpdate.description = description;
     if (bio !== undefined)         dataToUpdate.bio         = bio;
-    if (address !== undefined) dataToUpdate.address = address;
+    if (address !== undefined) {
+      dataToUpdate.address = address;
+      // Geocodificar automáticamente si no vienen coords manuales
+      if (typeof lat !== 'number' && typeof lng !== 'number') {
+        const coords = await geocodeAddress(address);
+        if (coords) { dataToUpdate.lat = coords.lat; dataToUpdate.lng = coords.lng; }
+      }
+    }
     if (typeof lat === 'number' && !isNaN(lat)) dataToUpdate.lat = lat;
     if (typeof lng === 'number' && !isNaN(lng)) dataToUpdate.lng = lng;
     if (phone !== undefined)       dataToUpdate.phone       = phone;

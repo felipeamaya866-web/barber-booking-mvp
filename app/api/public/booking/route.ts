@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
     // Enviar emails (no bloqueante — si falla no afecta la reserva)
     if (owner?.email) {
       sendBookingEmails({
+        appointmentId:     appointment.id,
         clientName:        session?.user?.name || guestName,
         clientEmail:       session?.user?.email || null,
         ownerEmail:        owner.email,

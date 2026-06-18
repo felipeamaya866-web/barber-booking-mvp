@@ -81,6 +81,30 @@ export async function POST(req: NextRequest) {
   let fallidos   = 0;
   let expirados  = 0;
 
+  // ─── Auto-completar citas pasadas ────────────────────────────────────────
+  // Busca citas CONFIRMED/PENDING cuya fecha ya pasó (con margen de la duración)
+  // y las marca como COMPLETED automáticamente
+  const citasPasadas = await prisma.appointment.findMany({
+    where: {
+      status: { in: ['CONFIRMED', 'PENDING'] },
+      date:   { lt: new Date(ahora.getTime() - 30 * 60 * 1000) }, // al menos 30 min antes
+    },
+    include: { service: { select: { duration: true } } },
+  });
+
+  const citasACompletar = citasPasadas.filter(apt => {
+    const fin = apt.date.getTime() + apt.service.duration * 60 * 1000;
+    return fin < ahora.getTime();
+  });
+
+  if (citasACompletar.length > 0) {
+    await prisma.appointment.updateMany({
+      where: { id: { in: citasACompletar.map(a => a.id) } },
+      data:  { status: 'COMPLETED' },
+    });
+    console.log(`[CRON] Auto-completadas ${citasACompletar.length} citas pasadas`);
+  }
+
   // ─── Todas las subs con tarjeta que necesitan cobro ──────────────────────
   // Incluye tanto las que están en fecha como las que están en período de gracia
   const pendientes = await prisma.subscription.findMany({

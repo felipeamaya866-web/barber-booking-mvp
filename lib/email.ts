@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { createHmac } from 'crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM   = 'BarberBooking <noreply@barberbooking.site>';
@@ -13,6 +14,7 @@ function formatTime(date: Date): string {
 }
 
 interface BookingEmailData {
+  appointmentId:    string;
   clientName:       string;
   clientEmail?:     string | null;
   ownerEmail:       string;
@@ -25,10 +27,17 @@ interface BookingEmailData {
   date:             Date;
 }
 
+function cancelToken(appointmentId: string): string {
+  return createHmac('sha256', process.env.NEXTAUTH_SECRET!)
+    .update(appointmentId)
+    .digest('hex');
+}
+
 function bookingHtml(data: BookingEmailData, role: 'client' | 'owner'): string {
-  const dateStr  = formatDate(data.date);
-  const timeStr  = formatTime(data.date);
-  const priceStr = `$${data.servicePrice.toLocaleString('es-CO')} COP`;
+  const dateStr   = formatDate(data.date);
+  const timeStr   = formatTime(data.date);
+  const priceStr  = `$${data.servicePrice.toLocaleString('es-CO')} COP`;
+  const cancelUrl = `https://barberbooking.site/api/public/booking/cancel?id=${data.appointmentId}&token=${cancelToken(data.appointmentId)}`;
 
   const headline = role === 'client'
     ? `¡Tu cita está confirmada, ${data.clientName}!`
@@ -68,12 +77,16 @@ function bookingHtml(data: BookingEmailData, role: 'client' | 'owner'): string {
             </td></tr>
           </table>
         </td></tr>
-        <!-- Footer note -->
+        <!-- Footer note / cancel -->
         <tr><td style="padding:0 36px 32px;">
-          <p style="margin:0;font-size:13px;color:rgba(245,240,232,0.35);line-height:1.6;">
+          ${role === 'client' ? `
+          <a href="${cancelUrl}" style="display:inline-block;margin-bottom:16px;background:#1a1a1a;border:1px solid #333;color:rgba(245,240,232,0.6);padding:10px 20px;border-radius:8px;font-size:13px;text-decoration:none;">
+            Cancelar esta cita
+          </a><br>` : ''}
+          <p style="margin:0;font-size:12px;color:rgba(245,240,232,0.3);line-height:1.6;">
             ${role === 'client'
-              ? 'Si necesitas cancelar o cambiar tu cita, comunícate directamente con la barbería.'
-              : `Esta notificación fue generada automáticamente por BarberBooking.`}
+              ? 'Solo puedes cancelar antes de la hora de la cita.'
+              : 'Notificación automática de BarberBooking.'}
           </p>
         </td></tr>
         <!-- Brand footer -->
