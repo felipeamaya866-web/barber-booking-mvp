@@ -32,7 +32,7 @@ export default function CookiesPage() {
             Política de <span style={{ color: '#C9A84C' }}>Cookies</span>
           </h1>
           <p style={{ fontSize: 13, color: 'rgba(245,240,232,0.4)', marginBottom: 32 }}>
-            Última actualización: 16 de junio de 2026
+            Última actualización: 18 de junio de 2026
           </p>
 
           <div className="tc">
@@ -44,8 +44,9 @@ export default function CookiesPage() {
 
             <h2>1. Cookies que utilizamos actualmente</h2>
             <p>
-              BarberBooking utiliza únicamente cookies <strong>estrictamente necesarias</strong> para el funcionamiento del
-              Servicio. No utilizamos cookies de publicidad, seguimiento de terceros, ni de perfilamiento comercial.
+              BarberBooking utiliza cookies <strong>estrictamente necesarias</strong> para el funcionamiento del Servicio
+              y cookies de <strong>analítica</strong> para entender cómo se usa la Plataforma. No utilizamos cookies de
+              publicidad ni de perfilamiento comercial.
             </p>
             <table>
               <thead>
@@ -70,18 +71,37 @@ export default function CookiesPage() {
                   <td>Recordar a qué página redirigir al Usuario después de iniciar sesión con Google.</td>
                   <td>Sesión</td>
                 </tr>
+                <tr>
+                  <td><code>_ga</code></td>
+                  <td>Google Analytics (Google LLC, EE.UU.)</td>
+                  <td>Distingue usuarios únicos para generar estadísticas de uso del sitio.</td>
+                  <td>2 años</td>
+                </tr>
+                <tr>
+                  <td><code>_ga_G-DQKXRY06VP</code></td>
+                  <td>Google Analytics (Google LLC, EE.UU.)</td>
+                  <td>Mantiene el estado de la sesión de analítica y registra vistas de página, clics y comportamiento de navegación.</td>
+                  <td>2 años</td>
+                </tr>
               </tbody>
             </table>
 
-            <h2>2. Cookies que no utilizamos (por ahora)</h2>
+            <h2>2. Transferencia internacional de datos de analítica</h2>
             <p>
-              Actualmente no utilizamos herramientas de analítica (como Google Analytics o Vercel Analytics), píxeles de
-              publicidad, ni cookies de redes sociales. Si en el futuro incorporamos alguna de estas herramientas, esta página
-              será actualizada antes de su activación, listando explícitamente la nueva cookie, su proveedor, propósito y
-              duración, y se solicitará el consentimiento correspondiente cuando la ley lo exija.
+              Las cookies de Google Analytics transfieren datos a servidores de Google LLC ubicados en Estados Unidos.
+              Esta transferencia se ampara en las cláusulas contractuales estándar aprobadas por la Comisión Europea y
+              en los mecanismos de adecuación aplicables. Puede consultar la política de privacidad de Google en{' '}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>.
             </p>
 
-            <h2>3. Cómo administrar las cookies</h2>
+            <h2>3. Cookies que no utilizamos</h2>
+            <p>
+              No utilizamos píxeles de publicidad, cookies de redes sociales ni herramientas de perfilamiento comercial.
+              Si en el futuro incorporamos alguna herramienta adicional, esta página será actualizada antes de su
+              activación y se solicitará el consentimiento correspondiente cuando la ley lo exija.
+            </p>
+
+            <h2>4. Cómo administrar las cookies</h2>
             <p>
               Las cookies descritas en la sección 1 son necesarias para que la Plataforma funcione (iniciar sesión y mantener
               su sesión activa). Si el Usuario configura su navegador para bloquear todas las cookies, es posible que no pueda
@@ -89,7 +109,7 @@ export default function CookiesPage() {
               ver y eliminar cookies desde su configuración de privacidad.
             </p>
 
-            <h2>4. Más información</h2>
+            <h2>5. Más información</h2>
             <p>
               Para más detalles sobre cómo tratamos los datos personales en general, consulta nuestra{' '}
               <Link href="/privacidad">Política de Privacidad</Link>. Para dudas específicas sobre cookies, escríbenos a{' '}

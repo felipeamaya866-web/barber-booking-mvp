@@ -33,7 +33,7 @@ export default function PrivacidadPage() {
             Política de <span style={{ color: '#C9A84C' }}>Privacidad</span>
           </h1>
           <p style={{ fontSize: 13, color: 'rgba(245,240,232,0.4)', marginBottom: 8 }}>
-            Última actualización: 16 de junio de 2026
+            Última actualización: 18 de junio de 2026
           </p>
           <p style={{ fontSize: 13, color: 'rgba(245,240,232,0.4)', marginBottom: 32 }}>
             Esta Política de Privacidad describe cómo se recolectan, usan, almacenan y protegen los datos personales de los
@@ -266,10 +266,13 @@ export default function PrivacidadPage() {
 
             <h2>14. Cookies y tecnologías similares</h2>
             <p>
-              La Plataforma utiliza únicamente cookies estrictamente necesarias para su funcionamiento (autenticación y
-              sesión). El detalle completo de cada cookie, su proveedor, propósito y duración se encuentra en nuestra{' '}
-              <Link href="/cookies">Política de Cookies</Link>, documento independiente que se actualizará antes de
-              incorporar cualquier herramienta adicional (por ejemplo, analítica) que use cookies o identificadores nuevos.
+              La Plataforma utiliza cookies estrictamente necesarias para su funcionamiento (autenticación y sesión) y
+              cookies de analítica a través de <strong>Google Analytics 4</strong> (Google LLC, EE.UU.), que nos permiten
+              entender cómo los Usuarios navegan por la Plataforma mediante estadísticas agregadas de páginas vistas,
+              clics y comportamiento de navegación. Los datos recopilados por Google Analytics se transfieren a servidores
+              en Estados Unidos bajo las cláusulas contractuales estándar de Google. El detalle completo de cada cookie,
+              su proveedor, propósito y duración se encuentra en nuestra{' '}
+              <Link href="/cookies">Política de Cookies</Link>.
             </p>
 
             <h2>15. Cambios a esta política</h2>
