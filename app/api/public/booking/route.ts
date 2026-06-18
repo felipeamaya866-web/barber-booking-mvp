@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendBookingEmails } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -115,6 +116,28 @@ export async function POST(req: NextRequest) {
         barbershop: { select: { name: true, address: true, phone: true } },
       },
     });
+
+    // Obtener email del dueño para notificación
+    const owner = await prisma.user.findUnique({
+      where: { id: barbershop.ownerId },
+      select: { email: true },
+    });
+
+    // Enviar emails (no bloqueante — si falla no afecta la reserva)
+    if (owner?.email) {
+      sendBookingEmails({
+        clientName:        session?.user?.name || guestName,
+        clientEmail:       session?.user?.email || null,
+        ownerEmail:        owner.email,
+        barbershopName:    appointment.barbershop.name,
+        barbershopAddress: appointment.barbershop.address,
+        barbershopPhone:   appointment.barbershop.phone,
+        barberName:        appointment.barber.name,
+        serviceName:       appointment.service.name,
+        servicePrice:      appointment.service.price,
+        date:              appointment.date,
+      }).catch(err => console.error('[EMAIL]', err));
+    }
 
     return NextResponse.json({
       appointment,
