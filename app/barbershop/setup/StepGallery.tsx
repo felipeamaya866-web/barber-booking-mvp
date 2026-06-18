@@ -19,20 +19,30 @@ export default function StepGallery({ data, onUpdate, onNext, onBack }: Props) {
   const minPhotos = 3;
   const maxPhotos = 40;
 
-  // ✅ Convierte el archivo a base64 para mostrar la imagen real
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Error al leer el archivo'));
-      reader.readAsDataURL(file);
+  // Comprime la imagen a JPEG 800px máx, calidad 0.75 (~50-100KB por foto)
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) { reject(new Error(`${file.name} no es una imagen`)); return; }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Error al procesar ${file.name}`)); };
+      img.src = url;
     });
-  };
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
-    const fileArray  = Array.from(files);
-    const remaining  = maxPhotos - photos.length;
+    const fileArray = Array.from(files);
+    const remaining = maxPhotos - photos.length;
 
     if (fileArray.length > remaining) {
       setError(`Solo puedes subir ${remaining} fotos más`);
@@ -43,15 +53,13 @@ export default function StepGallery({ data, onUpdate, onNext, onBack }: Props) {
     setUploading(true);
 
     try {
-      const previews = await Promise.all(
+      const compressed = await Promise.all(
         fileArray.map(async (file) => {
-          if (file.size > 5 * 1024 * 1024) throw new Error(`${file.name} supera los 5MB`);
-          if (!file.type.startsWith('image/')) throw new Error(`${file.name} no es una imagen`);
-          // ✅ Convertir a base64 para preview real
-          return fileToBase64(file);
+          if (file.size > 10 * 1024 * 1024) throw new Error(`${file.name} supera los 10MB`);
+          return compressImage(file);
         })
       );
-      setPhotos(prev => [...prev, ...previews]);
+      setPhotos(prev => [...prev, ...compressed]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar fotos');
     } finally {
