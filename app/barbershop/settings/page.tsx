@@ -285,13 +285,16 @@ export default function SettingsPage() {
     }
   }
 
+  const GOLD = '#C9A84C';
+
   // ── Loading ────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">Cargando configuración...</p>
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+            style={{ borderColor: `${GOLD} transparent transparent transparent` }} />
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Cargando configuración...</p>
         </div>
       </div>
     );
@@ -305,55 +308,56 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/barbershop" className="text-gray-400 hover:text-white transition-colors p-1 rounded">←</Link>
-          <div>
-            <h1 className="text-lg font-bold text-white">⚙️ Configuración</h1>
-            <p className="text-xs text-gray-400">{settings.name || 'Mi Barbería'}</p>
-          </div>
-          <div className="ml-auto">
-            <span className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded-full">Plan {settings.plan}</span>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0a0a0a' }}>
 
       {/* Mensajes */}
-      <div className="max-w-2xl mx-auto px-4 pt-4">
+      <div className="max-w-2xl mx-auto px-4 pt-6">
+        {/* Heading */}
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: GOLD }} />
+          <h1 className="text-lg font-bold text-white">Configuración</h1>
+          <span className="ml-auto text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a', color: 'rgba(255,255,255,0.5)' }}>
+            Plan {settings.plan}
+          </span>
+        </div>
         {/* Banner suscripción vencida */}
         {(settings.subscriptionStatus === 'EXPIRED' || settings.subscriptionStatus === 'CANCELLED') && (
-          <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4 flex items-center justify-between gap-3">
+          <div className="px-4 py-3 rounded-xl text-sm mb-4 flex items-center justify-between gap-3"
+            style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
             <span>⚠️ Tu suscripción ha vencido. Algunas funciones están bloqueadas.</span>
-            <a href="/barbershop/plans" className="shrink-0 bg-yellow-400 text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-300 transition">
+            <a href="/barbershop/plans"
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-80 transition"
+              style={{ backgroundColor: GOLD, color: '#000' }}>
               Renovar plan
             </a>
           </div>
         )}
         {successMsg && (
-          <div className="bg-green-900/40 border border-green-700 text-green-300 px-4 py-3 rounded-lg text-sm mb-4">
-            ✅ {successMsg}
+          <div className="px-4 py-3 rounded-xl text-sm mb-4"
+            style={{ backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', color: '#86efac' }}>
+            ✓ {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div className="bg-red-900/40 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-4">
-            ❌ {errorMsg}
+          <div className="px-4 py-3 rounded-xl text-sm mb-4"
+            style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+            {errorMsg}
           </div>
         )}
       </div>
 
       {/* Tabs */}
       <div className="max-w-2xl mx-auto px-4">
-        <div className="flex gap-1 bg-gray-900 rounded-xl p-1 mb-6 overflow-x-auto">
+        <div className="flex gap-1 p-1 rounded-xl mb-6 overflow-x-auto" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-max flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id ? 'bg-yellow-400 text-gray-900' : 'text-gray-400 hover:text-white'
-              }`}
+              className="flex-1 min-w-max flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+              style={activeTab === tab.id
+                ? { backgroundColor: GOLD, color: '#000' }
+                : { color: 'rgba(255,255,255,0.4)' }}
             >
               <span>{tab.icon}</span>
               <span className="hidden sm:inline">{tab.label}</span>
@@ -425,8 +429,10 @@ function InfoTab({
   const [parts, setParts] = useState<AddressParts>(() => parseAddress(settings.address));
   const [geocoding, setGeocoding] = useState(false);
 
-  const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:border-yellow-400 focus:outline-none transition-colors text-sm';
-  const inputClass  = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors text-sm';
+  const selectClass = 'w-full rounded-lg px-3 py-3 text-white text-sm focus:outline-none transition-colors' +
+    ' bg-[#1a1a1a] border border-[#2a2a2a] focus:border-[#C9A84C]';
+  const inputClass  = 'w-full rounded-lg px-3 py-3 text-white placeholder-[rgba(255,255,255,0.25)] text-sm focus:outline-none transition-colors' +
+    ' bg-[#1a1a1a] border border-[#2a2a2a] focus:border-[#C9A84C]';
 
   const set = (key: keyof AddressParts) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setParts((prev: AddressParts) => ({ ...prev, [key]: e.target.value }));
@@ -494,11 +500,11 @@ function InfoTab({
         <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={onLogoUpload} />
       </div>
 
-      <div className="border-t border-gray-800" />
+      <div className="border-t" style={{ borderColor: '#1e1e1e' }} />
 
       {/* ── Nombre ───────────────────────────── */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre de la barbería</label>
+        <label className="block text-sm font-medium text-white mb-1.5">Nombre de la barbería</label>
         <input
           type="text" value={settings.name}
           onChange={e => setSettings(prev => ({ ...prev, name: e.target.value }))}
@@ -606,56 +612,57 @@ function BioTab({ settings, setSettings, onSave, saving }: {
 }) {
   const maxDesc = 120;
   const maxBio  = 600;
+  const inputCls = 'w-full rounded-lg px-4 py-3 text-white text-sm focus:outline-none transition-colors bg-[#1a1a1a] border border-[#2a2a2a] focus:border-[#C9A84C] placeholder-[rgba(255,255,255,0.25)]';
 
   return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Subtítulo del hero</label>
-        <p className="text-xs text-gray-500 mb-2">Aparece debajo del nombre en la parte superior.</p>
+        <label className="block text-sm font-medium text-white mb-1">Subtítulo del hero</label>
+        <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Aparece debajo del nombre en la parte superior.</p>
         <input
           type="text" value={settings.description}
           onChange={e => setSettings(prev => ({ ...prev, description: e.target.value.slice(0, maxDesc) }))}
           placeholder="Ej: La barbería más elegante de la ciudad"
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors"
+          className={inputCls}
         />
         <div className="flex justify-end mt-1">
-          <span className="text-xs text-gray-500">{maxDesc - settings.description.length} restantes</span>
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{maxDesc - settings.description.length} restantes</span>
         </div>
       </div>
 
-      <div className="border-t border-gray-800" />
+      <div className="border-t" style={{ borderColor: '#1e1e1e' }} />
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">Sobre Nosotros</label>
-        <p className="text-xs text-gray-500 mb-2">Sección completa debajo del hero. Si está vacío, no aparece.</p>
+        <label className="block text-sm font-medium text-white mb-1">Sobre Nosotros</label>
+        <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Sección completa debajo del hero. Si está vacío, no aparece.</p>
         <textarea
           value={settings.bio}
           onChange={e => setSettings(prev => ({ ...prev, bio: e.target.value.slice(0, maxBio) }))}
           rows={6}
           placeholder="Somos una barbería con más de 10 años de experiencia..."
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none transition-colors resize-none"
+          className={`${inputCls} resize-none`}
         />
         <div className="flex justify-between items-center mt-1">
-          <p className="text-xs text-gray-500">Si está vacío, la sección no aparece.</p>
-          <span className={`text-xs ${(maxBio - settings.bio.length) < 80 ? 'text-yellow-400' : 'text-gray-500'}`}>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Si está vacío, la sección no aparece.</p>
+          <span className="text-xs" style={{ color: (maxBio - settings.bio.length) < 80 ? '#C9A84C' : 'rgba(255,255,255,0.3)' }}>
             {maxBio - settings.bio.length} restantes
           </span>
         </div>
       </div>
 
       {(settings.description || settings.bio) && (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 space-y-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Vista previa</p>
+        <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+          <p className="text-xs uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>Vista previa</p>
           {settings.description && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Subtítulo:</p>
+              <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Subtítulo:</p>
               <p className="text-white text-sm italic">"{settings.description}"</p>
             </div>
           )}
           {settings.bio && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Sobre Nosotros:</p>
-              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{settings.bio}</p>
+              <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Sobre Nosotros:</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.7)' }}>{settings.bio}</p>
             </div>
           )}
         </div>
@@ -838,10 +845,11 @@ function SaveButton({ onSave, saving, label = 'Guardar cambios' }: {
     <button
       onClick={onSave}
       disabled={saving}
-      className="w-full bg-yellow-400 text-gray-900 py-3.5 rounded-xl font-bold text-sm hover:bg-yellow-300 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+      className="w-full py-3.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 mt-2 hover:opacity-90 transition-opacity"
+      style={{ backgroundColor: '#C9A84C', color: '#000' }}
     >
       {saving
-        ? <><span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />Guardando...</>
+        ? <><span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />Guardando...</>
         : label
       }
     </button>

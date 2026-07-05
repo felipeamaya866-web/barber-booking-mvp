@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 
 const QRCodeDisplay = dynamic(() => import('./components/QRCodeDisplay'), {
   ssr: false,
-  loading: () => <button className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm">Cargando...</button>,
+  loading: () => <button className="px-4 py-2 rounded-lg text-sm" style={{ backgroundColor: '#1a1a1a', color: '#fff' }}>Cargando...</button>,
 });
 
 const AnalyticsDashboard = dynamic(() => import('./components/AnalyticsDashboard'), {
@@ -28,13 +28,15 @@ interface SubState {
 }
 
 const ACTIONS = [
-  { path: '/barbershop/services', icon: '✂️', label: 'Gestionar Servicios',  sub: 'Ver y crear servicios',    bg: 'bg-blue-900/30',   text: 'text-blue-400' },
-  { path: '/barbershop/agenda',   icon: '📅', label: 'Ver Agenda',           sub: 'Gestionar citas',           bg: 'bg-green-900/30',  text: 'text-green-400' },
-  { path: '/barbershop/barbers',  icon: '👥', label: 'Mi Equipo',            sub: 'Gestionar barberos',        bg: 'bg-orange-900/30', text: 'text-orange-400' },
-  { path: '/barbershop/settings', icon: '⚙️', label: 'Configuración',        sub: 'Editar barbería',           bg: 'bg-purple-900/30', text: 'text-purple-400' },
-  { path: '/barbershop/plans',    icon: '💳', label: 'Planes y pagos',       sub: 'Gestionar suscripción',     bg: 'bg-yellow-900/30', text: 'text-yellow-400' },
-  { path: '/barbershop/stats',    icon: '📊', label: 'Estadísticas',         sub: 'Ingresos y métricas',       bg: 'bg-indigo-900/30', text: 'text-indigo-400' },
+  { path: '/barbershop/services', icon: '✂️', label: 'Servicios',      sub: 'Ver y crear servicios'  },
+  { path: '/barbershop/agenda',   icon: '📅', label: 'Agenda',         sub: 'Gestionar citas'         },
+  { path: '/barbershop/barbers',  icon: '👥', label: 'Mi Equipo',      sub: 'Gestionar barberos'      },
+  { path: '/barbershop/settings', icon: '⚙️', label: 'Configuración',  sub: 'Editar barbería'         },
+  { path: '/barbershop/plans',    icon: '💳', label: 'Planes',         sub: 'Gestionar suscripción'   },
+  { path: '/barbershop/stats',    icon: '📊', label: 'Estadísticas',   sub: 'Ingresos y métricas'     },
 ];
+
+const GOLD = '#C9A84C';
 
 export default function BarbershopHome() {
   const router = useRouter();
@@ -88,10 +90,11 @@ export default function BarbershopHome() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4" />
-          <p className="text-gray-400">Cargando...</p>
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+            style={{ borderColor: `${GOLD} transparent transparent transparent` }} />
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Cargando...</p>
         </div>
       </div>
     );
@@ -99,11 +102,15 @@ export default function BarbershopHome() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="bg-red-900/40 border border-red-700 rounded-xl p-6 max-w-md">
-          <h2 className="text-red-300 font-semibold mb-2">Error</h2>
-          <p className="text-red-400">{error}</p>
-          <button onClick={loadBarbershop} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Reintentar</button>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="rounded-2xl p-6 max-w-md" style={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+          <h2 className="text-white font-semibold mb-2">Error</h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)' }}>{error}</p>
+          <button onClick={loadBarbershop}
+            className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-80 transition"
+            style={{ backgroundColor: GOLD, color: '#000' }}>
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -112,121 +119,119 @@ export default function BarbershopHome() {
   if (!barbershop) return null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#0a0a0a' }}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
 
-      {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-lg flex items-center justify-center text-base flex-shrink-0">✂️</div>
-              <div>
-                <h1 className="text-base sm:text-lg font-bold text-white leading-tight">{barbershop.name}</h1>
-                <p className="text-xs text-gray-400">{barbershop.address}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-sm text-gray-400">{session?.user?.name}</span>
-              <button onClick={() => signOut({ callbackUrl: '/login' })}
-                className="text-xs sm:text-sm text-red-400 hover:text-red-300 font-medium transition">
-                Salir
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-
-        {/* ── Banner: cobro fallido (período de gracia activo) ── */}
+        {/* ── Banner: cobro fallido ─────────────────────────────────── */}
         {sub?.chargeFailedAt && sub.status !== 'EXPIRED' && (() => {
           const limite = new Date(new Date(sub.chargeFailedAt).getTime() + 3 * 24 * 60 * 60 * 1000);
           const dias   = Math.max(0, Math.ceil((limite.getTime() - Date.now()) / 86_400_000));
           return (
-            <div className="bg-orange-900/40 border border-orange-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+              style={{ backgroundColor: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
               <div>
-                <p className="text-orange-300 font-semibold text-sm">⚠️ No pudimos cobrar tu suscripción</p>
-                <p className="text-orange-400/80 text-xs mt-0.5">
-                  Reintentaremos el cobro automáticamente.
-                  {dias > 0
-                    ? ` Tienes ${dias} día${dias !== 1 ? 's' : ''} antes de que se suspenda el servicio.`
-                    : ' Hoy es el último día antes de la suspensión.'}
+                <p className="font-semibold text-sm" style={{ color: '#FDE68A' }}>⚠️ No pudimos cobrar tu suscripción</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(253,230,138,0.7)' }}>
+                  {dias > 0 ? `Tienes ${dias} día${dias !== 1 ? 's' : ''} antes de la suspensión.` : 'Hoy es el último día.'}
                 </p>
               </div>
               <a href="/barbershop/plans"
-                className="shrink-0 bg-orange-500 hover:bg-orange-400 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                className="shrink-0 px-4 py-2 rounded-lg text-xs font-bold hover:opacity-80 transition"
+                style={{ backgroundColor: GOLD, color: '#000' }}>
                 Actualizar tarjeta
               </a>
             </div>
           );
         })()}
 
-        {/* ── Banner: suscripción expirada ── */}
+        {/* ── Banner: suscripción expirada ──────────────────────────── */}
         {(sub?.status === 'EXPIRED' || sub?.status === 'CANCELLED') && (
-          <div className="bg-red-900/40 border border-red-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+            style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
             <div>
-              <p className="text-red-300 font-semibold text-sm">❌ Tu suscripción ha vencido</p>
-              <p className="text-red-400/80 text-xs mt-0.5">Renueva tu plan para volver a usar todas las funciones.</p>
+              <p className="font-semibold text-sm text-red-400">Suscripción vencida</p>
+              <p className="text-xs mt-0.5 text-red-400/70">Renueva tu plan para usar todas las funciones.</p>
             </div>
             <a href="/barbershop/plans"
-              className="shrink-0 bg-yellow-400 hover:bg-yellow-300 text-gray-900 px-4 py-2 rounded-lg text-xs font-bold transition">
+              className="shrink-0 px-4 py-2 rounded-lg text-xs font-bold hover:opacity-80 transition"
+              style={{ backgroundColor: GOLD, color: '#000' }}>
               Renovar plan
             </a>
           </div>
         )}
 
-        {/* ── Banner Página Pública ── */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl shadow-lg p-5">
+        {/* ── Página pública ────────────────────────────────────────── */}
+        <div className="rounded-2xl p-5" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h3 className="font-bold text-lg text-white">🌐 Tu Página Pública</h3>
-              <p className="text-blue-200 text-sm">Comparte este link con tus clientes</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+                <h3 className="font-bold text-white">Tu Página Pública</h3>
+              </div>
+              <p className="text-xs pl-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                Comparte este enlace con tus clientes
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <a href={publicUrl} target="_blank" rel="noopener noreferrer"
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition border border-white/20 text-center">
-                👁️ Ver Mi Página
+                className="px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80 border"
+                style={{ borderColor: '#2a2a2a', color: 'rgba(255,255,255,0.7)', backgroundColor: '#1a1a1a' }}>
+                Ver página ↗
               </a>
               <button onClick={copyPublicLink}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition border border-white/20">
-                {showLinkCopied ? '✓ Copiado!' : '📋 Copiar Link'}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80 border"
+                style={{ borderColor: '#2a2a2a', color: showLinkCopied ? GOLD : 'rgba(255,255,255,0.7)', backgroundColor: '#1a1a1a' }}>
+                {showLinkCopied ? '✓ Copiado' : 'Copiar link'}
               </button>
               <QRCodeDisplay url={publicUrl} barbershopName={barbershop.name} />
             </div>
           </div>
-          {/* ✅ Fondo oscuro para que el link se vea */}
-          <div className="bg-black/30 rounded-xl px-4 py-2.5 text-sm font-mono text-white truncate border border-white/10">
+          <div className="px-4 py-2.5 rounded-xl text-sm font-mono truncate"
+            style={{ backgroundColor: '#0a0a0a', color: GOLD, border: `1px solid ${GOLD}25` }}>
             {publicUrl}
           </div>
         </div>
 
-        {/* ── Analytics ── */}
+        {/* ── Analytics ─────────────────────────────────────────────── */}
         <AnalyticsDashboard />
 
-        {/* ── Acciones Rápidas ── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-800">
-            <h2 className="text-base font-semibold text-white">⚡ Acciones Rápidas</h2>
+        {/* ── Acciones Rápidas ──────────────────────────────────────── */}
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid #1e1e1e' }}>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+              <h2 className="text-sm font-semibold text-white">Acceso rápido</h2>
+            </div>
           </div>
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {ACTIONS.map(action => (
               <button key={action.path} onClick={() => router.push(action.path)}
-                className="flex items-center gap-3 p-4 bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-gray-600 rounded-xl transition text-left group">
-                <div className={`${action.bg} p-3 rounded-xl flex-shrink-0`}>
-                  <span className="text-xl">{action.icon}</span>
+                className="flex items-center gap-3 p-4 rounded-xl text-left group transition-all hover:-translate-y-0.5"
+                style={{ backgroundColor: '#1a1a1a', border: '1px solid #222' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${GOLD}50`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#222'; }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ backgroundColor: `${GOLD}15`, border: `1px solid ${GOLD}25` }}>
+                  {action.icon}
                 </div>
-                <div>
-                  <p className="font-medium text-white text-sm group-hover:text-yellow-400 transition">{action.label}</p>
-                  <p className="text-xs text-gray-400">{action.sub}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-white text-sm truncate group-hover:text-[#C9A84C] transition-colors">
+                    {action.label}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{action.sub}</p>
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* ── Info Card ── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-          <h2 className="text-base font-semibold text-white mb-4">🏪 Información de la Barbería</h2>
+        {/* ── Info de la barbería ───────────────────────────────────── */}
+        <div className="rounded-2xl p-5" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+            <h2 className="text-sm font-semibold text-white">Información de la barbería</h2>
+          </div>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: 'Nombre',    value: barbershop.name },
@@ -235,14 +240,16 @@ export default function BarbershopHome() {
               ...(barbershop.description ? [{ label: 'Descripción', value: barbershop.description, full: true }] : []),
             ].map(item => (
               <div key={item.label} className={item.full ? 'sm:col-span-2' : ''}>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{item.label}</dt>
-                <dd className="mt-1 text-sm text-gray-200">{item.value}</dd>
+                <dt className="text-[11px] font-medium uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {item.label}
+                </dt>
+                <dd className="text-sm text-white">{item.value}</dd>
               </div>
             ))}
           </dl>
         </div>
 
-      </main>
+      </div>
     </div>
   );
 }
