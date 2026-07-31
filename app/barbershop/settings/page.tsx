@@ -1015,6 +1015,11 @@ function BookingPolicyTab({ settings, setSettings, onSave, saving }: {
           <input type="number" min={0} max={365} value={maxDays}
             onChange={e => setSettings(s => ({ ...s, maxAdvanceBookingDays: Math.max(0, parseInt(e.target.value) || 0) }))}
             className={inputClass} placeholder="0" />
+          {maxDays > 0 && maxDays < 7 && (
+            <p className="mt-1.5 text-xs" style={{ color: '#f87171' }}>
+              ⚠️ Con {maxDays} día{maxDays !== 1 ? 's' : ''} los clientes solo podrán reservar para {maxDays === 1 ? 'hoy o mañana' : `los próximos ${maxDays} días`}. Usa 0 para sin límite.
+            </p>
+          )}
         </div>
       </div>
 
