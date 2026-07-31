@@ -27,14 +27,16 @@ interface Barber {
 }
 
 interface Barbershop {
-  id:          string;
-  name:        string;
-  slug:        string;
-  address:     string;
-  phone:       string;
-  colors:      string[];
-  services:    Service[];
-  barbers:     Barber[];
+  id:                    string;
+  name:                  string;
+  slug:                  string;
+  address:               string;
+  phone:                 string;
+  colors:                string[];
+  services:              Service[];
+  barbers:               Barber[];
+  minBookingNoticeHours: number;
+  maxAdvanceBookingDays: number;
 }
 
 interface TimeSlot {
@@ -110,7 +112,10 @@ export default function BookingPage() {
   // Resultado final
   const [appointmentResult, setAppointmentResult] = useState<Record<string, unknown> | null>(null);
 
-  const days = getNextDays(14); // próximos 14 días
+  const maxDays = barbershop
+    ? (barbershop.maxAdvanceBookingDays > 0 ? Math.min(barbershop.maxAdvanceBookingDays, 90) : 60)
+    : 60;
+  const days = getNextDays(maxDays);
 
   // ── Cargar barbería ────────────────────────
   useEffect(() => {
@@ -140,8 +145,10 @@ export default function BookingPage() {
     try {
       setLoadingSlots(true);
       setSelectedSlot(null);
+      const utcOffset      = new Date().getTimezoneOffset(); // e.g. 300 for Colombia UTC-5
+      const minNoticeHours = barbershop?.minBookingNoticeHours ?? 0;
       const res  = await fetch(
-        `/api/public/availability?barberId=${selectedBarber!.id}&date=${selectedDate}&duration=${selectedService!.duration}`
+        `/api/public/availability?barberId=${selectedBarber!.id}&date=${selectedDate}&duration=${selectedService!.duration}&minNoticeHours=${minNoticeHours}&utcOffset=${utcOffset}`
       );
       const data = await res.json();
       setSlots(data.slots || []);
