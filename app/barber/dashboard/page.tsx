@@ -39,13 +39,21 @@ interface Stats {
 }
 
 interface Appointment {
-  id:        string;
-  date:      string;
-  status:    string;
-  guestName: string | null;
+  id:         string;
+  date:       string;
+  status:     string;
+  attended:   boolean | null;
+  guestName:  string | null;
   guestPhone: string | null;
-  service:   { name: string; duration: number; price: number };
-  client:    { name: string | null; email: string | null } | null;
+  clientId:   string | null;
+  service:    { name: string; duration: number; price: number };
+  client:     { name: string | null; email: string | null; image: string | null } | null;
+}
+
+interface ClientNote {
+  id:     string;
+  rating: number;
+  note:   string | null;
 }
 
 // ─────────────────────────────────────────────
@@ -106,8 +114,16 @@ export default function BarberDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedDay, setSelectedDay]   = useState(toLocalDateStr(new Date()));
   const [loadingAgenda, setLoadingAgenda] = useState(false);
-  const [detailApt, setDetailApt]       = useState<Appointment | null>(null);
+  const [detailApt, setDetailApt]           = useState<Appointment | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingAttendance, setUpdatingAttendance] = useState<string | null>(null);
+
+  // Client notes
+  const [clientNote, setClientNote]   = useState<ClientNote | null>(null);
+  const [noteRating, setNoteRating]   = useState(5);
+  const [noteText, setNoteText]       = useState('');
+  const [savingNote, setSavingNote]   = useState(false);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
 
   const weekDays = getWeekDays(monday);
   const todayStr = toLocalDateStr(new Date());
@@ -180,6 +196,81 @@ export default function BarberDashboard() {
     } catch { /* silencioso */ }
     finally { setUpdatingStatus(false); }
   }
+
+  async function updateAttendance(id: string, attended: boolean | null) {
+    setUpdatingAttendance(id);
+    try {
+      const res = await fetch(`/api/barber/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attended }),
+      });
+      if (res.ok) {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, attended } : a));
+        setDetailApt(prev => prev?.id === id ? { ...prev, attended } : prev);
+      }
+    } catch { /* silencioso */ }
+    finally { setUpdatingAttendance(null); }
+  }
+
+  async function openDetail(apt: Appointment) {
+    setDetailApt(apt);
+    setShowNoteEditor(false);
+    setClientNote(null);
+    setNoteRating(5);
+    setNoteText('');
+
+    if (apt.clientId) {
+      try {
+        const res = await fetch(`/api/barbershop/client-notes?clientId=${apt.clientId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.note) {
+            setClientNote(data.note);
+            setNoteRating(data.note.rating);
+            setNoteText(data.note.note || '');
+          }
+        }
+      } catch { /* silencioso */ }
+    } else if (apt.guestPhone) {
+      try {
+        const res = await fetch(`/api/barbershop/client-notes?guestPhone=${encodeURIComponent(apt.guestPhone)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.note) {
+            setClientNote(data.note);
+            setNoteRating(data.note.rating);
+            setNoteText(data.note.note || '');
+          }
+        }
+      } catch { /* silencioso */ }
+    }
+  }
+
+  async function saveClientNote() {
+    if (!detailApt) return;
+    setSavingNote(true);
+    try {
+      const body: Record<string, unknown> = { rating: noteRating, note: noteText };
+      if (detailApt.clientId) body.clientId = detailApt.clientId;
+      else if (detailApt.guestPhone) body.guestPhone = detailApt.guestPhone;
+      else return;
+
+      const res = await fetch('/api/barbershop/client-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setClientNote(data.clientNote);
+        setShowNoteEditor(false);
+      }
+    } catch { /* silencioso */ }
+    finally { setSavingNote(false); }
+  }
+
+  const STAR_LABELS = ['', 'Difícil', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'];
 
   // ─────────────────────────────────────────────
   // ESTADOS DE CARGA / ERROR
@@ -404,29 +495,72 @@ export default function BarberDashboard() {
                   const hora    = new Date(apt.date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
                   const cliente = apt.client?.name || apt.guestName || 'Cliente';
                   const cfg     = STATUS_CONFIG[apt.status];
+                  const isToday = selectedDay === todayStr;
+                  const isUpdating = updatingAttendance === apt.id;
                   return (
-                    <button key={apt.id} onClick={() => setDetailApt(apt)}
-                      className="w-full rounded-xl p-4 text-left transition hover:opacity-80"
+                    <div key={apt.id}
+                      className="rounded-xl overflow-hidden"
                       style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
-                      <div className="flex items-start gap-3">
-                        <div className="text-center w-12 flex-shrink-0">
-                          <p className="font-bold text-sm" style={{ color: GOLD }}>{hora}</p>
-                          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{apt.service.duration}min</p>
+                      <button onClick={() => openDetail(apt)}
+                        className="w-full p-4 text-left transition hover:opacity-80">
+                        <div className="flex items-start gap-3">
+                          <div className="text-center w-12 flex-shrink-0">
+                            <p className="font-bold text-sm" style={{ color: GOLD }}>{hora}</p>
+                            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{apt.service.duration}min</p>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-white text-sm truncate">{cliente}</p>
+                            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{apt.service.name}</p>
+                            {apt.guestPhone && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>📞 {apt.guestPhone}</p>}
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <span className="text-[11px] px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: cfg?.bg, color: cfg?.color, border: `1px solid ${cfg?.border}` }}>
+                              {cfg?.label}
+                            </span>
+                            <p className="text-sm font-bold text-white mt-1">{formatPrice(apt.service.price)}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-white text-sm truncate">{cliente}</p>
-                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{apt.service.name}</p>
-                          {apt.guestPhone && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>📞 {apt.guestPhone}</p>}
+                      </button>
+
+                      {/* Botones de asistencia — solo para citas de hoy */}
+                      {isToday && apt.status !== 'CANCELLED' && (
+                        <div className="flex gap-px" style={{ borderTop: '1px solid #1e1e1e' }}>
+                          <button
+                            onClick={() => updateAttendance(apt.id, apt.attended === true ? null : true)}
+                            disabled={isUpdating}
+                            className="flex-1 py-2.5 text-xs font-semibold transition"
+                            style={{
+                              backgroundColor: apt.attended === true ? 'rgba(34,197,94,0.15)' : 'transparent',
+                              color: apt.attended === true ? '#86efac' : 'rgba(255,255,255,0.35)',
+                            }}>
+                            {isUpdating ? '…' : '✓ Asistió'}
+                          </button>
+                          <div style={{ width: 1, backgroundColor: '#1e1e1e' }} />
+                          <button
+                            onClick={() => updateAttendance(apt.id, apt.attended === false ? null : false)}
+                            disabled={isUpdating}
+                            className="flex-1 py-2.5 text-xs font-semibold transition"
+                            style={{
+                              backgroundColor: apt.attended === false ? 'rgba(239,68,68,0.12)' : 'transparent',
+                              color: apt.attended === false ? '#fca5a5' : 'rgba(255,255,255,0.35)',
+                            }}>
+                            {isUpdating ? '…' : '✗ No asistió'}
+                          </button>
                         </div>
-                        <div className="flex-shrink-0 text-right">
-                          <span className="text-[11px] px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: cfg?.bg, color: cfg?.color, border: `1px solid ${cfg?.border}` }}>
-                            {cfg?.label}
-                          </span>
-                          <p className="text-sm font-bold text-white mt-1">{formatPrice(apt.service.price)}</p>
+                      )}
+
+                      {/* Indicador asistencia en días anteriores */}
+                      {!isToday && apt.attended !== null && apt.attended !== undefined && (
+                        <div className="px-4 py-1.5 text-[11px] font-medium" style={{
+                          borderTop: '1px solid #1e1e1e',
+                          color: apt.attended ? '#86efac' : '#fca5a5',
+                          backgroundColor: apt.attended ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
+                        }}>
+                          {apt.attended ? '✓ Asistió' : '✗ No asistió'}
                         </div>
-                      </div>
-                    </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -526,8 +660,12 @@ export default function BarberDashboard() {
       {/* ── Modal detalle cita ───────────────────────────────────────── */}
       {detailApt && (
         <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ backgroundColor: '#111111', border: '1px solid #2a2a2a' }}>
+          style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+          onClick={e => { if (e.target === e.currentTarget) setDetailApt(null); }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            style={{ backgroundColor: '#111111', border: '1px solid #2a2a2a' }}>
+
+            {/* Header */}
             <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #1e1e1e' }}>
               <div className="flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
@@ -537,20 +675,103 @@ export default function BarberDashboard() {
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-lg transition hover:opacity-60"
                 style={{ color: 'rgba(255,255,255,0.4)', backgroundColor: '#1a1a1a' }}>×</button>
             </div>
+
+            {/* Info cita */}
             <div className="p-5 space-y-3">
               {[
                 ['Cliente',  detailApt.client?.name || detailApt.guestName || '—'],
-                ['Teléfono', detailApt.client?.email || detailApt.guestPhone || '—'],
+                ['Contacto', detailApt.client?.email || detailApt.guestPhone || '—'],
                 ['Servicio', detailApt.service.name],
                 ['Hora',     new Date(detailApt.date).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })],
                 ['Precio',   formatPrice(detailApt.service.price)],
+                ...(detailApt.attended !== null && detailApt.attended !== undefined
+                  ? [['Asistencia', detailApt.attended ? '✓ Asistió' : '✗ No asistió']]
+                  : []
+                ),
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between text-sm">
                   <span style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
-                  <span className="text-white font-medium">{value}</span>
+                  <span className="text-white font-medium" style={
+                    label === 'Asistencia'
+                      ? { color: detailApt.attended ? '#86efac' : '#fca5a5' }
+                      : {}
+                  }>{value}</span>
                 </div>
               ))}
             </div>
+
+            {/* Sección notas del cliente */}
+            {(detailApt.clientId || detailApt.guestPhone) && (
+              <div className="mx-5 mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid #2a2a2a' }}>
+                <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: '#1a1a1a' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-3 rounded-full" style={{ backgroundColor: GOLD }} />
+                    <p className="text-xs font-semibold text-white">Observaciones del cliente</p>
+                  </div>
+                  <button onClick={() => setShowNoteEditor(!showNoteEditor)}
+                    className="text-[11px] px-2.5 py-1 rounded-lg transition hover:opacity-80"
+                    style={{ backgroundColor: `${GOLD}20`, color: GOLD }}>
+                    {showNoteEditor ? 'Cancelar' : clientNote ? 'Editar' : '+ Agregar'}
+                  </button>
+                </div>
+
+                {!showNoteEditor && clientNote && (
+                  <div className="px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(s => (
+                        <span key={s} className="text-base" style={{ color: s <= clientNote.rating ? GOLD : 'rgba(255,255,255,0.15)' }}>★</span>
+                      ))}
+                      <span className="text-xs ml-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        {STAR_LABELS[clientNote.rating]}
+                      </span>
+                    </div>
+                    {clientNote.note && (
+                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{clientNote.note}</p>
+                    )}
+                  </div>
+                )}
+
+                {!showNoteEditor && !clientNote && (
+                  <div className="px-4 py-3">
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Sin observaciones para este cliente.</p>
+                  </div>
+                )}
+
+                {showNoteEditor && (
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Calificación del cliente</p>
+                      <div className="flex items-center gap-2">
+                        {[1,2,3,4,5].map(s => (
+                          <button key={s} onClick={() => setNoteRating(s)}
+                            className="text-2xl transition hover:scale-110"
+                            style={{ color: s <= noteRating ? GOLD : 'rgba(255,255,255,0.15)' }}>★</button>
+                        ))}
+                        <span className="text-xs ml-1" style={{ color: GOLD }}>{STAR_LABELS[noteRating]}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Observaciones</p>
+                      <textarea
+                        value={noteText}
+                        onChange={e => setNoteText(e.target.value)}
+                        rows={3}
+                        placeholder="Puntual, buen cliente, solicita servicio X..."
+                        className="w-full rounded-xl px-3 py-2.5 text-xs text-white resize-none outline-none"
+                        style={{ backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a' }}
+                      />
+                    </div>
+                    <button onClick={saveClientNote} disabled={savingNote}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold disabled:opacity-50 transition hover:opacity-80"
+                      style={{ backgroundColor: GOLD, color: '#000' }}>
+                      {savingNote ? 'Guardando...' : 'Guardar observaciones'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Acciones de estado */}
             <div className="p-5 pt-0 space-y-2">
               {detailApt.status !== 'COMPLETED' && detailApt.status !== 'CANCELLED' && (
                 <button

@@ -38,6 +38,26 @@ interface Barbershop {
   reviews: Review[];
 }
 
+interface Product {
+  id: string; name: string; description: string | null;
+  price: number; image: string | null;
+}
+
+interface ServiceComboItem {
+  id: string; service: { id: string; name: string; price: number; duration: number };
+}
+
+interface ServiceCombo {
+  id: string; name: string; description: string | null;
+  price: number; items: ServiceComboItem[];
+}
+
+interface Promotion {
+  id: string; title: string; description: string | null;
+  discount: number; discountType: string;
+  validFrom: string; validUntil: string;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 function isLight(hex: string): boolean {
   try {
@@ -110,10 +130,13 @@ export default function PublicBarbershopPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
-  const [scrolled, setScrolled]     = useState(false);
+  const [barbershop, setBarbershop]   = useState<Barbershop | null>(null);
+  const [products, setProducts]       = useState<Product[]>([]);
+  const [combos, setCombos]           = useState<ServiceCombo[]>([]);
+  const [promotions, setPromotions]   = useState<Promotion[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState<string | null>(null);
+  const [scrolled, setScrolled]       = useState(false);
 
   useEffect(() => { loadBarbershop(); }, [slug]);
 
@@ -125,10 +148,20 @@ export default function PublicBarbershopPage() {
 
   const loadBarbershop = async () => {
     try {
-      const res  = await fetch(`/api/public/barbershop/${slug}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al cargar');
-      setBarbershop(data.barbershop);
+      const [shopRes, extrasRes] = await Promise.all([
+        fetch(`/api/public/barbershop/${slug}`),
+        fetch(`/api/public/barbershop/${slug}/extras`),
+      ]);
+      const shopData   = await shopRes.json();
+      if (!shopRes.ok) throw new Error(shopData.error || 'Error al cargar');
+      setBarbershop(shopData.barbershop);
+
+      if (extrasRes.ok) {
+        const extrasData = await extrasRes.json();
+        setProducts(extrasData.products ?? []);
+        setCombos(extrasData.combos ?? []);
+        setPromotions(extrasData.promotions ?? []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
@@ -491,6 +524,136 @@ export default function PublicBarbershopPage() {
           )}
         </div>
       </section>
+
+      {/* ── Promociones ──────────────────────────────────────────── */}
+      {promotions.length > 0 && (
+        <section className="py-24 sm:py-32" style={{ backgroundColor: `${c1}09` }}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-10">
+            <SectionHeading eyebrow="Ofertas especiales" title="Promociones" c0={c0} c1={c1} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {promotions.map((promo, idx) => {
+                const pc = colorAt(idx);
+                const daysLeft = Math.ceil((new Date(promo.validUntil).getTime() - Date.now()) / 86400000);
+                return (
+                  <div key={promo.id}
+                    className="rounded-2xl overflow-hidden relative"
+                    style={{ background: `linear-gradient(135deg, ${pc}12 0%, ${colorAt(idx+1)}08 100%)`, border: `1px solid ${pc}30` }}>
+                    <div className="absolute top-4 right-4 text-3xl font-black" style={{ color: pc }}>
+                      {promo.discountType === 'PERCENT' ? `${promo.discount}%` : `-$${promo.discount.toLocaleString('es-CO')}`}
+                    </div>
+                    <div className="p-6 pt-5">
+                      <div className="mb-3">
+                        <div className="w-8 h-0.5 rounded-full mb-3" style={{ backgroundColor: pc }} />
+                        <h3 className="text-lg font-bold text-gray-900">{promo.title}</h3>
+                        {promo.description && (
+                          <p className="text-sm text-gray-600 mt-1">{promo.description}</p>
+                        )}
+                      </div>
+                      <p className="text-xs font-semibold mt-4" style={{ color: pc }}>
+                        {daysLeft === 1 ? 'Último día' : `${daysLeft} días restantes`}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Combos ───────────────────────────────────────────────── */}
+      {combos.length > 0 && (
+        <section className="py-24 sm:py-32">
+          <div className="max-w-6xl mx-auto px-6 sm:px-10">
+            <SectionHeading eyebrow="Paquetes especiales" title="Combos" c0={c0} c1={c1} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {combos.map((combo, idx) => {
+                const cc = colorAt(idx);
+                const fullPrice = combo.items.reduce((s, i) => s + i.service.price, 0);
+                const savings   = fullPrice - combo.price;
+                return (
+                  <div key={combo.id}
+                    className="rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: '#fff', border: `1px solid ${cc}25`, boxShadow: `0 0 30px ${cc}08` }}>
+                    <div className="h-1" style={{ background: `linear-gradient(90deg, ${cc}, ${colorAt(idx+1)})` }} />
+                    <div className="p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">{combo.name}</h3>
+                      {combo.description && (
+                        <p className="text-sm text-gray-500 mb-4">{combo.description}</p>
+                      )}
+                      <div className="space-y-2 mb-5">
+                        {combo.items.map(item => (
+                          <div key={item.id} className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: cc }} />
+                            <span className="flex-1">{item.service.name}</span>
+                            <span className="text-xs" style={{ color: cc }}>{item.service.duration}min</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          {savings > 0 && (
+                            <p className="text-xs text-gray-400 line-through">{formatPrice(fullPrice)}</p>
+                          )}
+                          <p className="text-2xl font-black" style={{ color: cc }}>{formatPrice(combo.price)}</p>
+                        </div>
+                        {savings > 0 && (
+                          <span className="text-[11px] px-2 py-1 rounded-full font-bold"
+                            style={{ backgroundColor: `${cc}15`, color: cc }}>
+                            Ahorras {formatPrice(savings)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="px-6 pb-5">
+                      <Link href={`/book/${barbershop.slug}`}
+                        className="block text-center py-2.5 rounded-xl text-sm font-bold transition hover:opacity-80"
+                        style={{ backgroundColor: cc, color: isLight(cc) ? '#111' : '#fff' }}>
+                        Reservar combo
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Productos ─────────────────────────────────────────────── */}
+      {products.length > 0 && (
+        <section className="py-24 sm:py-32" style={{ backgroundColor: `${c0}05` }}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-10">
+            <SectionHeading eyebrow="Tienda" title="Nuestros productos" c0={c0} c1={c1} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {products.map((prod, idx) => {
+                const pc = colorAt(idx);
+                return (
+                  <div key={prod.id}
+                    className="rounded-2xl overflow-hidden bg-white"
+                    style={{ border: `1px solid ${pc}20`, boxShadow: `0 4px 20px ${pc}08` }}>
+                    <div className="relative h-40 flex items-center justify-center"
+                      style={{ backgroundColor: `${pc}08` }}>
+                      {prod.image ? (
+                        <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-4xl opacity-30">🧴</span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-bold text-gray-900 text-sm">{prod.name}</h4>
+                      {prod.description && (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{prod.description}</p>
+                      )}
+                      <p className="text-base font-black mt-2" style={{ color: pc }}>{formatPrice(prod.price)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Reseñas ──────────────────────────────────────────────── */}
       {barbershop.reviews.length > 0 && (

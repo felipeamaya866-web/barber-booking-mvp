@@ -17,8 +17,9 @@ export async function PATCH(
     });
     if (!barber) return NextResponse.json({ error: 'Perfil de barbero no encontrado' }, { status: 404 });
 
-    const { status } = await req.json();
-    if (!['COMPLETED', 'CANCELLED', 'CONFIRMED'].includes(status)) {
+    const { status, attended } = await req.json();
+
+    if (status !== undefined && !['COMPLETED', 'CANCELLED', 'CONFIRMED'].includes(status)) {
       return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
     }
 
@@ -30,7 +31,10 @@ export async function PATCH(
 
     const updated = await prisma.appointment.update({
       where: { id: params.id },
-      data:  { status },
+      data: {
+        ...(status   !== undefined && { status }),
+        ...(attended !== undefined && { attended }),
+      },
     });
 
     return NextResponse.json({ appointment: updated });

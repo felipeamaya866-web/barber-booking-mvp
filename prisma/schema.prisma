@@ -64,13 +64,16 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role      @default(CLIENT)
+  birthday      DateTime? // Para filtro de cumpleaños en gestión de clientes
+  phone         String?   // Teléfono del cliente
 
   barbershop    Barbershop?
-  barberProfile Barber?        @relation("BarberUser") // ✅ NUEVO — si es barbero vinculado
+  barberProfile Barber?        @relation("BarberUser")
   reviews       Review[]
   appointments  Appointment[]
   accounts      Account[]
   sessions      Session[]
+  clientNotes   ClientNote[]   @relation("ClientNotes")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -110,6 +113,9 @@ model Barbershop {
   reviews      Review[]
   barbers      Barber[]
   appointments Appointment[]
+  products     Product[]
+  combos       ServiceCombo[]
+  promotions   Promotion[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -169,7 +175,8 @@ model Barber {
   appointments Appointment[]
   schedules    BarberSchedule[]
   breaks       BarberBreak[]
-  invitations  BarberInvitation[] // ✅ NUEVO
+  invitations  BarberInvitation[]
+  clientNotes  ClientNote[]
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -232,28 +239,30 @@ model BarberBreak {
 
 // 👉 SERVICIOS
 model Service {
-  id           String        @id @default(cuid())
+  id           String             @id @default(cuid())
   name         String
   description  String?
   price        Float
   duration     Int
 
   barbershopId String
-  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  barbershop   Barbershop         @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   appointments Appointment[]
+  comboItems   ServiceComboItem[]
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@index([barbershopId])
 }
 
 // 📅 CITAS
 model Appointment {
-  id     String            @id @default(cuid())
-  date   DateTime
-  status AppointmentStatus @default(CONFIRMED)
-  notes  String?
+  id       String            @id @default(cuid())
+  date     DateTime
+  status   AppointmentStatus @default(CONFIRMED)
+  notes    String?
+  attended Boolean?          // null=no registrado, true=asistió, false=no asistió
 
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id])
@@ -292,6 +301,94 @@ model Review {
   updatedAt     DateTime   @updatedAt
 
   @@index([barbershopId])
+  @@index([clientId])
+}
+
+// 🛒 PRODUCTOS
+model Product {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?    @db.Text
+  price        Float
+  image        String?
+  isAvailable  Boolean    @default(true)
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([barbershopId])
+}
+
+// 📦 COMBOS DE SERVICIOS
+model ServiceCombo {
+  id           String           @id @default(cuid())
+  name         String
+  description  String?          @db.Text
+  price        Float
+  isActive     Boolean          @default(true)
+
+  barbershopId String
+  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  items        ServiceComboItem[]
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([barbershopId])
+}
+
+model ServiceComboItem {
+  id        String       @id @default(cuid())
+  comboId   String
+  combo     ServiceCombo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service      @relation(fields: [serviceId], references: [id])
+
+  @@unique([comboId, serviceId])
+  @@index([comboId])
+}
+
+// 🏷️ PROMOCIONES
+model Promotion {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?    @db.Text
+  discount     Float
+  discountType String     @default("PERCENT") // PERCENT | FIXED
+  validFrom    DateTime
+  validUntil   DateTime
+  isActive     Boolean    @default(true)
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([barbershopId])
+}
+
+// 📝 NOTAS DE CLIENTE (observaciones del barbero por cliente)
+model ClientNote {
+  id         String   @id @default(cuid())
+  rating     Int      @default(5) // 1-5: qué tan buen cliente es
+  note       String?  @db.Text    // Observaciones del barbero
+
+  barberId   String
+  barber     Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  clientId   String?
+  client     User?    @relation("ClientNotes", fields: [clientId], references: [id])
+  guestPhone String?  // Para clientes sin cuenta registrada
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([barberId, clientId])
+  @@index([barberId])
   @@index([clientId])
 }
 

@@ -28,12 +28,15 @@ interface SubState {
 }
 
 const ACTIONS = [
-  { path: '/barbershop/services', icon: '✂️', label: 'Servicios',      sub: 'Ver y crear servicios'  },
-  { path: '/barbershop/agenda',   icon: '📅', label: 'Agenda',         sub: 'Gestionar citas'         },
-  { path: '/barbershop/barbers',  icon: '👥', label: 'Mi Equipo',      sub: 'Gestionar barberos'      },
-  { path: '/barbershop/settings', icon: '⚙️', label: 'Configuración',  sub: 'Editar barbería'         },
-  { path: '/barbershop/plans',    icon: '💳', label: 'Planes',         sub: 'Gestionar suscripción'   },
-  { path: '/barbershop/stats',    icon: '📊', label: 'Estadísticas',   sub: 'Ingresos y métricas'     },
+  { path: '/barbershop/agenda',     icon: '📅', label: 'Agenda',        sub: 'Gestionar citas'         },
+  { path: '/barbershop/clients',    icon: '👥', label: 'Clientes',      sub: 'Ver y gestionar clientes'},
+  { path: '/barbershop/services',   icon: '✂️', label: 'Servicios',     sub: 'Ver y crear servicios'   },
+  { path: '/barbershop/combos',     icon: '📦', label: 'Combos',        sub: 'Paquetes de servicios'   },
+  { path: '/barbershop/products',   icon: '🛍️', label: 'Productos',     sub: 'Productos en venta'      },
+  { path: '/barbershop/promotions', icon: '🏷️', label: 'Promociones',   sub: 'Ofertas y descuentos'    },
+  { path: '/barbershop/barbers',    icon: '💈', label: 'Mi Equipo',     sub: 'Gestionar barberos'      },
+  { path: '/barbershop/stats',      icon: '📊', label: 'Estadísticas',  sub: 'Ingresos y métricas'     },
+  { path: '/barbershop/settings',   icon: '⚙️', label: 'Configuración', sub: 'Editar barbería'         },
 ];
 
 const GOLD = '#C9A84C';

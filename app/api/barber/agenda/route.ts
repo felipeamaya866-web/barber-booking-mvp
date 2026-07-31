@@ -33,9 +33,17 @@ export async function GET(req: NextRequest) {
           lte: new Date(ty, tm - 1, td, 23, 59, 59),
         },
       },
-      include: {
+      select: {
+        id:         true,
+        date:       true,
+        status:     true,
+        notes:      true,
+        attended:   true,
+        guestName:  true,
+        guestPhone: true,
+        clientId:   true,
         service: { select: { name: true, duration: true, price: true } },
-        client:  { select: { name: true, email: true } },
+        client:  { select: { name: true, email: true, image: true } },
       },
       orderBy: { date: 'asc' },
     });
