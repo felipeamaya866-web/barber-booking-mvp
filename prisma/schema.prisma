@@ -96,6 +96,11 @@ model Barbershop {
   // 📸 GALERÍA
   photos      String[]
 
+  // ⏱️ POLÍTICA DE RESERVAS
+  minBookingNoticeHours Int @default(0)  // Mín. horas de anticipación para reservar (0 = sin límite)
+  minCancelNoticeHours  Int @default(0)  // Mín. horas de anticipación para cancelar (0 = sin límite)
+  maxAdvanceBookingDays Int @default(0)  // Máx. días en el futuro para reservar (0 = sin límite)
+
   // 📍 GEOLOCALIZACIÓN
   lat         Float?
   lng         Float?

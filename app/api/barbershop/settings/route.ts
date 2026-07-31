@@ -50,6 +50,9 @@ export async function GET() {
         logo:        true,
         lat:         true,
         lng:         true,
+        minBookingNoticeHours: true,
+        minCancelNoticeHours:  true,
+        maxAdvanceBookingDays: true,
         subscription: {
           select: { plan: true, status: true, trialEndsAt: true, endDate: true, nextChargeAt: true, chargeFailedAt: true, paymentSourceId: true },
         },
@@ -60,7 +63,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Barbería no encontrada' }, { status: 404 });
     }
 
-    const { colors, logo, subscription, ...rest } = barbershop;
+    const { colors, logo, subscription, minBookingNoticeHours, minCancelNoticeHours, maxAdvanceBookingDays, ...rest } = barbershop;
 
     // Auto-expirar trial o suscripción si ya venció
     const subFresh = await checkAndExpire(barbershop.id);
@@ -69,14 +72,17 @@ export async function GET() {
       barbershop: {
         ...rest,
         ...colorsToObject(colors),
-        logoUrl:             logo ?? '',
-        plan:                subFresh?.plan           ?? subscription?.plan   ?? 'LITE',
-        subscriptionStatus:  subFresh?.status         ?? subscription?.status ?? 'TRIAL',
-        trialEndsAt:         subFresh?.trialEndsAt    ?? null,
-        subscriptionEndDate: subFresh?.endDate        ?? null,
-        nextChargeAt:        subFresh?.nextChargeAt   ?? null,
-        chargeFailedAt:      subFresh?.chargeFailedAt ?? null,
-        paymentSourceId:     subFresh?.paymentSourceId ?? null,
+        logoUrl:               logo ?? '',
+        plan:                  subFresh?.plan            ?? subscription?.plan   ?? 'LITE',
+        subscriptionStatus:    subFresh?.status          ?? subscription?.status ?? 'TRIAL',
+        trialEndsAt:           subFresh?.trialEndsAt     ?? null,
+        subscriptionEndDate:   subFresh?.endDate         ?? null,
+        nextChargeAt:          subFresh?.nextChargeAt    ?? null,
+        chargeFailedAt:        subFresh?.chargeFailedAt  ?? null,
+        paymentSourceId:       subFresh?.paymentSourceId ?? null,
+        minBookingNoticeHours: minBookingNoticeHours ?? 0,
+        minCancelNoticeHours:  minCancelNoticeHours  ?? 0,
+        maxAdvanceBookingDays: maxAdvanceBookingDays ?? 0,
       },
     });
   } catch (error) {
@@ -109,6 +115,9 @@ export async function PUT(req: NextRequest) {
       logoUrl,
       lat,
       lng,
+      minBookingNoticeHours,
+      minCancelNoticeHours,
+      maxAdvanceBookingDays,
     } = body;
 
     // Verificar suscripción activa antes de permitir edición
@@ -150,6 +159,10 @@ export async function PUT(req: NextRequest) {
     if (phone !== undefined)       dataToUpdate.phone       = phone;
     if (photos !== undefined)      dataToUpdate.photos      = photos;
     if (logoUrl !== undefined)     dataToUpdate.logo        = logoUrl;
+
+    if (minBookingNoticeHours !== undefined) dataToUpdate.minBookingNoticeHours = Math.max(0, parseInt(minBookingNoticeHours));
+    if (minCancelNoticeHours  !== undefined) dataToUpdate.minCancelNoticeHours  = Math.max(0, parseInt(minCancelNoticeHours));
+    if (maxAdvanceBookingDays !== undefined) dataToUpdate.maxAdvanceBookingDays = Math.max(1, parseInt(maxAdvanceBookingDays));
 
     // Si vienen colores, reconstruir colors[] sin perder el que no viene
     if (primaryColor !== undefined || secondaryColor !== undefined) {

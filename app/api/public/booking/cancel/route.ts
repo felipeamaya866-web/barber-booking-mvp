@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   try {
     const appointment = await prisma.appointment.findUnique({
       where: { id },
-      include: { barbershop: { select: { name: true } } },
+      include: { barbershop: { select: { name: true, minCancelNoticeHours: true } } },
     });
 
     if (!appointment) {
@@ -46,6 +46,19 @@ export async function GET(req: NextRequest) {
     // Solo cancelar si la cita es en el futuro
     if (appointment.date <= new Date()) {
       return new NextResponse(cancelHtml('No puedes cancelar una cita que ya pasó.', false), { headers: { 'Content-Type': 'text/html' } });
+    }
+
+    // Política de anticipación mínima para cancelar
+    const minCancelHours = appointment.barbershop.minCancelNoticeHours;
+    if (minCancelHours > 0) {
+      const msHastaLaCita = appointment.date.getTime() - Date.now();
+      const minMs         = minCancelHours * 60 * 60 * 1000;
+      if (msHastaLaCita < minMs) {
+        return new NextResponse(
+          cancelHtml(`Esta barbería requiere cancelar con al menos ${minCancelHours} hora${minCancelHours !== 1 ? 's' : ''} de anticipación. Ya no es posible cancelar esta cita.`, false),
+          { headers: { 'Content-Type': 'text/html' } }
+        );
+      }
     }
 
     await prisma.appointment.update({

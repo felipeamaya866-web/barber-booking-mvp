@@ -26,9 +26,12 @@ interface BarbershopSettings {
   subscriptionEndDate?: string | null;
   lat?: number | null;
   lng?: number | null;
+  minBookingNoticeHours?: number;
+  minCancelNoticeHours?:  number;
+  maxAdvanceBookingDays?: number;
 }
 
-type Tab = 'info' | 'bio' | 'gallery' | 'colors';
+type Tab = 'info' | 'bio' | 'gallery' | 'colors' | 'booking';
 
 const DEFAULT_COLORS = {
   primaryColor: '#111827',
@@ -305,6 +308,7 @@ export default function SettingsPage() {
     { id: 'bio',     label: 'Contenido',   icon: '📝' },
     { id: 'gallery', label: 'Galería',     icon: '📸' },
     { id: 'colors',  label: 'Colores',     icon: '🎨' },
+    { id: 'booking', label: 'Reservas',    icon: '⏱️' },
   ];
 
   return (
@@ -401,6 +405,19 @@ export default function SettingsPage() {
             settings={settings}
             setSettings={setSettings}
             onSave={() => handleSave({ primaryColor: settings.primaryColor, secondaryColor: settings.secondaryColor })}
+            saving={saving}
+          />
+        )}
+
+        {activeTab === 'booking' && (
+          <BookingPolicyTab
+            settings={settings}
+            setSettings={setSettings}
+            onSave={() => handleSave({
+              minBookingNoticeHours: settings.minBookingNoticeHours,
+              minCancelNoticeHours:  settings.minCancelNoticeHours,
+              maxAdvanceBookingDays: settings.maxAdvanceBookingDays,
+            })}
             saving={saving}
           />
         )}
@@ -853,5 +870,180 @@ function SaveButton({ onSave, saving, label = 'Guardar cambios' }: {
         : label
       }
     </button>
+  );
+}
+
+// ═════════════════════════════════════════════
+// TAB: POLÍTICA DE RESERVAS
+// ═════════════════════════════════════════════
+const GOLD = '#C9A84C';
+
+function BookingPolicyTab({ settings, setSettings, onSave, saving }: {
+  settings:    BarbershopSettings;
+  setSettings: React.Dispatch<React.SetStateAction<BarbershopSettings>>;
+  onSave:      () => void;
+  saving:      boolean;
+}) {
+  const minBook   = settings.minBookingNoticeHours ?? 0;
+  const minCancel = settings.minCancelNoticeHours  ?? 0;
+  const maxDays   = settings.maxAdvanceBookingDays ?? 0;
+
+  const inputClass = 'w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none bg-[#1a1a1a] border border-[#2a2a2a] focus:border-[#C9A84C] transition-colors';
+
+  const BOOK_OPTIONS   = [0, 1, 2, 3, 4, 6, 8, 12, 24, 48];
+  const CANCEL_OPTIONS = [0, 1, 2, 3, 4, 6, 8, 12, 24, 48, 72];
+  const MAX_DAYS_OPTIONS = [0, 7, 14, 30, 60, 90, 180];
+
+  function label(h: number, type: 'booking' | 'cancel') {
+    if (h === 0) return type === 'booking' ? 'Sin límite (reserva inmediata)' : 'Sin límite (cancelación libre)';
+    if (h < 24)  return `${h} hora${h !== 1 ? 's' : ''} de anticipación`;
+    const d = h / 24;
+    return `${d} día${d !== 1 ? 's' : ''} (${h}h) de anticipación`;
+  }
+
+  return (
+    <div className="space-y-6 py-4">
+
+      {/* Anticipación mínima para RESERVAR */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+          <h3 className="text-sm font-semibold text-white">Anticipación mínima para reservar</h3>
+        </div>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Cuánto tiempo antes de la cita puede un cliente hacer una reserva. Con 0 puede reservar para el mismo momento.
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {BOOK_OPTIONS.map(h => (
+            <button key={h} onClick={() => setSettings(s => ({ ...s, minBookingNoticeHours: h }))}
+              className="px-3 py-2.5 rounded-xl text-xs font-medium transition text-left"
+              style={minBook === h
+                ? { backgroundColor: GOLD, color: '#000' }
+                : { backgroundColor: '#1a1a1a', color: 'rgba(255,255,255,0.55)', border: '1px solid #2a2a2a' }}>
+              {h === 0 ? 'Sin límite' : h < 24 ? `${h}h` : `${h/24}d`}
+            </button>
+          ))}
+        </div>
+
+        <div className="px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: `${GOLD}12`, border: `1px solid ${GOLD}30` }}>
+          <span style={{ color: GOLD }}>Configuración actual: </span>
+          <span className="text-white font-medium">{label(minBook, 'booking')}</span>
+        </div>
+
+        {/* Input manual */}
+        <div>
+          <label className="block text-[11px] font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            O ingresa un valor personalizado (en horas)
+          </label>
+          <input type="number" min={0} max={168} value={minBook}
+            onChange={e => setSettings(s => ({ ...s, minBookingNoticeHours: Math.max(0, parseInt(e.target.value) || 0) }))}
+            className={inputClass} placeholder="0" />
+        </div>
+      </div>
+
+      {/* Anticipación mínima para CANCELAR */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+          <h3 className="text-sm font-semibold text-white">Anticipación mínima para cancelar</h3>
+        </div>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Cuánto tiempo antes de la cita puede el cliente cancelar. Con 0 puede cancelar hasta el último momento.
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {CANCEL_OPTIONS.map(h => (
+            <button key={h} onClick={() => setSettings(s => ({ ...s, minCancelNoticeHours: h }))}
+              className="px-3 py-2.5 rounded-xl text-xs font-medium transition text-left"
+              style={minCancel === h
+                ? { backgroundColor: GOLD, color: '#000' }
+                : { backgroundColor: '#1a1a1a', color: 'rgba(255,255,255,0.55)', border: '1px solid #2a2a2a' }}>
+              {h === 0 ? 'Sin límite' : h < 24 ? `${h}h` : `${h/24}d`}
+            </button>
+          ))}
+        </div>
+
+        <div className="px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: `${GOLD}12`, border: `1px solid ${GOLD}30` }}>
+          <span style={{ color: GOLD }}>Configuración actual: </span>
+          <span className="text-white font-medium">{label(minCancel, 'cancel')}</span>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            O ingresa un valor personalizado (en horas)
+          </label>
+          <input type="number" min={0} max={168} value={minCancel}
+            onChange={e => setSettings(s => ({ ...s, minCancelNoticeHours: Math.max(0, parseInt(e.target.value) || 0) }))}
+            className={inputClass} placeholder="0" />
+        </div>
+      </div>
+
+      {/* Anticipación máxima para RESERVAR */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+          <h3 className="text-sm font-semibold text-white">Máximo días en el futuro para reservar</h3>
+        </div>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Qué tan lejos en el tiempo puede un cliente reservar una cita.
+        </p>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {MAX_DAYS_OPTIONS.map(d => (
+            <button key={d} onClick={() => setSettings(s => ({ ...s, maxAdvanceBookingDays: d }))}
+              className="px-3 py-2.5 rounded-xl text-xs font-medium transition"
+              style={maxDays === d
+                ? { backgroundColor: GOLD, color: '#000' }
+                : { backgroundColor: '#1a1a1a', color: 'rgba(255,255,255,0.55)', border: '1px solid #2a2a2a' }}>
+              {d === 0 ? 'Sin límite' : d < 30 ? `${d}d` : d === 30 ? '1 mes' : d === 60 ? '2 meses' : d === 90 ? '3 meses' : '6 meses'}
+            </button>
+          ))}
+        </div>
+
+        <div className="px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: `${GOLD}12`, border: `1px solid ${GOLD}30` }}>
+          <span style={{ color: GOLD }}>Configuración actual: </span>
+          <span className="text-white font-medium">
+            {maxDays === 0 ? 'Sin límite (cliente puede reservar a cualquier fecha futura)' : `Hasta ${maxDays} día${maxDays !== 1 ? 's' : ''} en el futuro`}
+          </span>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            O ingresa un valor personalizado (en días, 0 = sin límite)
+          </label>
+          <input type="number" min={0} max={365} value={maxDays}
+            onChange={e => setSettings(s => ({ ...s, maxAdvanceBookingDays: Math.max(0, parseInt(e.target.value) || 0) }))}
+            className={inputClass} placeholder="0" />
+        </div>
+      </div>
+
+      {/* Resumen */}
+      <div className="rounded-2xl p-5 space-y-3" style={{ backgroundColor: '#111111', border: '1px solid #1e1e1e' }}>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-1 h-4 rounded-full" style={{ backgroundColor: GOLD }} />
+          <h3 className="text-sm font-semibold text-white">Resumen de política</h3>
+        </div>
+        {[
+          { icon: '📅', text: minBook === 0 ? 'Clientes pueden reservar hasta el mismo momento' : `Reservas con mín. ${minBook < 24 ? minBook + 'h' : (minBook/24) + 'd'} de anticipación` },
+          { icon: '❌', text: minCancel === 0 ? 'Clientes pueden cancelar hasta el último momento' : `Cancelaciones con mín. ${minCancel < 24 ? minCancel + 'h' : (minCancel/24) + 'd'} de anticipación` },
+          { icon: '🗓️', text: maxDays === 0 ? 'Sin límite de anticipación máxima para reservar' : `Reservas disponibles hasta ${maxDays} día${maxDays !== 1 ? 's' : ''} en el futuro` },
+        ].map(r => (
+          <div key={r.text} className="flex items-start gap-2.5 text-sm">
+            <span>{r.icon}</span>
+            <span style={{ color: 'rgba(255,255,255,0.6)' }}>{r.text}</span>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onSave} disabled={saving}
+        className="w-full py-3.5 rounded-xl font-bold text-sm disabled:opacity-50 hover:opacity-90 transition flex items-center justify-center gap-2"
+        style={{ backgroundColor: GOLD, color: '#000' }}>
+        {saving
+          ? <><span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />Guardando...</>
+          : 'Guardar política de reservas'
+        }
+      </button>
+    </div>
   );
 }

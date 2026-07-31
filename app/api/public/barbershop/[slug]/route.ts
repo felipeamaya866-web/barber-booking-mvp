@@ -27,6 +27,9 @@ export async function GET(
         theme:       true,
         photos:      true,
         viewCount:   true,
+        minBookingNoticeHours: true,
+        minCancelNoticeHours:  true,
+        maxAdvanceBookingDays: true,
         services: {
           orderBy: { createdAt: 'asc' },
           select: {

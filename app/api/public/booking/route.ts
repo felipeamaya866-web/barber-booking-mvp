@@ -63,6 +63,31 @@ export async function POST(req: NextRequest) {
     }
 
     const fechaCita = new Date(datetime);
+    const ahora     = new Date();
+
+    // ── Política de anticipación para reservar ───────────────────
+    if (barbershop.minBookingNoticeHours > 0) {
+      const minMs = barbershop.minBookingNoticeHours * 60 * 60 * 1000;
+      if (fechaCita.getTime() - ahora.getTime() < minMs) {
+        const h = barbershop.minBookingNoticeHours;
+        return NextResponse.json(
+          { error: `Las reservas deben hacerse con al menos ${h} hora${h !== 1 ? 's' : ''} de anticipación.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // ── Política de anticipación máxima ──────────────────────────
+    if (barbershop.maxAdvanceBookingDays > 0) {
+      const maxMs = barbershop.maxAdvanceBookingDays * 24 * 60 * 60 * 1000;
+      if (fechaCita.getTime() - ahora.getTime() > maxMs) {
+        const d = barbershop.maxAdvanceBookingDays;
+        return NextResponse.json(
+          { error: `Solo se puede reservar con un máximo de ${d} día${d !== 1 ? 's' : ''} de anticipación.` },
+          { status: 400 }
+        );
+      }
+    }
 
     // Verificar disponibilidad — detección correcta de solapamiento
     const inicioCita = fechaCita.getTime();
